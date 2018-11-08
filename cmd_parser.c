@@ -14,7 +14,7 @@
 
 static cmd_arg_t arg_buffer[CMD_MAX_ARGS+1]; // plus 1 for command name
 
-static cmd_status_t cmd_arg_convert(char *s, cmd_arg_type_t type, cmd_arg_t *v);
+static cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v);
 static void cmd_help_handler0(uint32_t i);
 
 extern cmd_command_t cmd_array[];
@@ -133,7 +133,7 @@ const char *cmd_arg_type_message(cmd_arg_type_t type)
 	}
 }
 
-static cmd_status_t cmd_arg_convert(char *s, cmd_arg_type_t type, cmd_arg_t *v)
+static cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v)
 {
 	cmd_status_t status;
 
@@ -162,7 +162,7 @@ static cmd_status_t cmd_arg_convert(char *s, cmd_arg_type_t type, cmd_arg_t *v)
 			break;
 		case CMD_ARG_STRING:
 			// don't copy string, just copy the pointer
-			v->s = s;
+			v->s = (char *)s;
 			break;
 		case CMD_ARG_VOID:
 			v->u = 0;
