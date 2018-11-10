@@ -3,6 +3,11 @@
 
 #include "cmd_parser.h"
 
+#define CMD_ECHO_INPUT			0
+#define CMD_MAX_COMMAND_LENGTH	32
+#define CMD_MAX_ARGS			8		// see "if (!adp)" line inside cmd_help_handler()
+#define CMD_MAX_NAME_LENGTH		"10"	// note the quotes
+
 // custom printf function
 #define cmd_printf(...) printf(__VA_ARGS__)
 

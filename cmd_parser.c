@@ -9,9 +9,8 @@
 
 #define CMD_COMMAND_DELIMITERS ";"
 #define CMD_PARAM_DELIMITERS " "
-#define CMD_MAX_ARGS 8					// see "if (!adp)" line inside cmd_help_handler()
-#define CMD_MAX_NAME_LENGTH "10"		// note the quotes
 
+static char cmd_buffer[CMD_MAX_COMMAND_LENGTH+1]; // plus 1 for '\0'
 static cmd_arg_t arg_buffer[CMD_MAX_ARGS+1]; // plus 1 for command name
 
 static cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v);
@@ -19,6 +18,70 @@ static void cmd_help_handler0(uint32_t i);
 
 extern cmd_command_t cmd_array[];
 extern uint32_t cmd_array_length;
+
+void cmd_main_loop()
+{
+	int c;
+	bool q1 = false;
+	bool q1_prev = false;
+	bool q2 = false;
+	bool q2_prev = false;
+	char *buf = cmd_buffer;
+	uint32_t i = 0;
+
+	while (1)
+	{
+		if ((c = fgetc(stdin)) == EOF)
+			return;
+		c = (char)c;
+
+		#if CMD_ECHO_INPUT == 1
+		putc(c, stdin);
+		#endif
+
+		if (c == '\'' && !q2)
+			q1 ^= true;
+		if (c == '\"' && !q1)
+			q2 ^= true;
+
+		// remove control quotes from resulting command string
+		if ((c == '\'' && (q1 || q1_prev)) ||
+			(c == '\"' && (q2 || q2_prev)))
+			continue;
+
+		// replace spaces inside quotes with space markers
+		if (c == ' ' && (q1 || q2))
+			c = '_';
+
+		// remove several special characters
+		if (c == '\r' || c == '\t')
+			continue;
+
+		if (c == '\n')
+		{
+			// process command completion
+			*buf = '\0';
+
+			// cmd handler...
+			cmd_process_line(cmd_buffer);
+			//printf("{%s}\n", cmd_buffer);
+
+			// prepare to next command processing
+			buf = cmd_buffer; i = 0;
+			q1 = false;
+			q2 = false;
+		}
+		else if (i < CMD_MAX_COMMAND_LENGTH)
+		{
+			// add character to the command buffer
+			*buf++ = (char)c;
+			i ++;
+		}
+
+		q1_prev = q1;
+		q2_prev = q2;
+	}
+}
 
 void cmd_process_line(char *line)
 {

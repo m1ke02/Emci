@@ -49,6 +49,7 @@ typedef struct
 	const char *arg_dscr;
 } cmd_command_t;
 
+void cmd_main_loop();
 void cmd_process_line(char *line);
 const char *cmd_status_message(cmd_status_t status);
 const char *cmd_arg_type_message(cmd_arg_type_t type);
