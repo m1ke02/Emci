@@ -77,6 +77,7 @@ void cmd_response_handler(uint8_t argc, char *argv[], cmd_status_t status, uint3
 		case CMD_STATUS_ARG_FORMAT:
 			printf(": %s)\r\n", argv[*extra]);
 			break;
+		case CMD_STATUS_ARG_INVALID:
 		case CMD_STATUS_ARG_TOO_HIGH:
 		case CMD_STATUS_ARG_TOO_LOW:
 			printf(": %s)\r\n", argv[*extra]);

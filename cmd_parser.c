@@ -8,7 +8,7 @@
 #include <math.h>
 
 #define CMD_COMMAND_DEL ';'
-#define CMD_PARAM_DELIMITERS " "
+#define CMD_ARG_DEL ' '
 
 static char cmd_buffer[CMD_MAX_LINE_LENGTH+1]; // plus 1 for '\0'
 static cmd_arg_t arg_buffer[CMD_MAX_ARGS+1]; // plus 1 for command name
@@ -22,139 +22,140 @@ extern uint_fast8_t cmd_array_length;
 void cmd_main_loop()
 {
 	int c;
-	char *cmd_tokens[CMD_MAX_COMMANDS];
-	cmd_tokenizer_state_t ts;
-	
-	memset(&ts, 0, sizeof(ts));
-	ts.del = CMD_COMMAND_DEL;
-	ts.quotes = false;
-	ts.buffer = ts.ptr = cmd_buffer;
-	ts.tokens = cmd_tokens;
+	char *ptr;
+	char *tokens[CMD_MAX_COMMANDS];
 
 	while (1)
 	{
-		if ((c = fgetc(stdin)) == EOF)
-			return;
-		c = (char)c;
+		// prepare to command line parsing
+		ptr = cmd_buffer;
 
-		#if CMD_ECHO_INPUT == 1
-		putc(c, stdout);
-		#endif
-
-		// remove several special characters
-		if (c == '\r' || c == '\t')
-			continue;
-
-		if (c == '\n')
+		// read command line char by char
+		while (1)
 		{
-			// process command completion
-			*(ts.ptr) = '\0';
-
-			// cmd handler...
-			printf("Done!\n");
-			printf("buffer=[%s]\n", ts.buffer);
-			for (uint8_t i = 0; i < ts.token_ctr; i ++)
+			if ((c = fgetc(stdin)) == EOF)
+				return;
+			
+			// backspace key support for terminal
+			if (c == '\x7F' && ptr > cmd_buffer)
 			{
-				printf("token%d=[%s]\n", i, ts.tokens[i]);
+				ptr --;
+				putc('\x7F', stdout);
+				continue;
 			}
-			//cmd_process_line(cmd_buffer);
 
-			// prepare to next command processing
-			memset(&ts, 0, sizeof(ts));
-			ts.del = CMD_COMMAND_DEL;
-			ts.quotes = false;
-			ts.buffer = ts.ptr = cmd_buffer;
-			ts.tokens = cmd_tokens;
-		}
-		else
-		{
-			cmd_tokenizer(&ts, c);
+			// remove several special characters
+			if (c == '\r' || c == '\t')
+				continue;
+
+			#if CMD_ECHO_INPUT == 1
+			putc(c, stdout);
+			#endif
+
+			if (c == '\n')
+			{
+				// terminate last command
+				*ptr = '\0';
+
+				uint_fast8_t ntokens = cmd_tokenize(cmd_buffer, CMD_COMMAND_DEL, true,
+					tokens, sizeof(tokens) / sizeof(tokens[0]));
+
+				// cmd handler...
+				for (uint_fast8_t i = 0; i < ntokens; i ++)
+				{
+					printf("cmd%d=[%s]\n", i, tokens[i]);
+					cmd_process_command(tokens[i]);
+				}
+
+				// we are done, go to next line
+				break;
+			}
+			else if (ptr - cmd_buffer < CMD_MAX_LINE_LENGTH)
+			{
+				*ptr++ = c;
+			}
 		}
 	}
 }
 
-/*void cmd_process_line(char *line)
+void cmd_process_command(char *command)
 {
-	char *cmd;
 	char *tokens[CMD_MAX_ARGS+1]; // plus 1 for command name
 
-	// walk through commands
-	char *cmd_iter = line;
-	while ((cmd = strtok_r(cmd_iter, CMD_COMMAND_DELIMITERS, &cmd_iter)))
+	// get tokens for command & args
+	uint_fast8_t ntokens = cmd_tokenize(command, CMD_ARG_DEL, false,
+		tokens, sizeof(tokens) / sizeof(tokens[0]));
+
+	for (uint_fast8_t i = 0; i < ntokens; i ++)
 	{
-		// walk through command tokens
-		char *token_iter = cmd;
-		uint_fast8_t num_tokens = 0;
-		while ((num_tokens < CMD_MAX_ARGS+1) &&
-			(tokens[num_tokens] = strtok_r(token_iter, CMD_PARAM_DELIMITERS, &token_iter)))
-			num_tokens ++;
+		printf("   arg%d=[%s]\n", i, tokens[i]);
+	}
 
-		if (num_tokens > 0)
+	if (ntokens > 0)
+	{
+		// command parsing/execution status
+		cmd_status_t status = CMD_STATUS_OK;
+		uint32_t extra = 0;
+
+		// search for requested command
+		uint_fast8_t cmd_num;
+		for (cmd_num = 0; cmd_num < cmd_array_length; cmd_num ++)
+			if (strcmp(cmd_array[cmd_num].name, tokens[0]) == 0)
+				break;
+		if (cmd_num >= cmd_array_length)
+			status = CMD_STATUS_UNKNOWN_CMD;
+
+		if (status == CMD_STATUS_OK)
 		{
-			// command parsing/execution status
-			cmd_status_t status = CMD_STATUS_OK;
-			uint32_t extra = 0;
+			// command found
+			int_fast8_t nargs_max = strlen(cmd_array[cmd_num].arg_types);
+			int_fast8_t nargs_min = nargs_max - cmd_array[cmd_num].arg_optional;
 
-			// search for requested command
-			uint_fast8_t cmd_num;
-			for (cmd_num = 0; cmd_num < cmd_array_length; cmd_num ++)
-				if (strcmp(cmd_array[cmd_num].name, tokens[0]) == 0)
-					break;
-			if (cmd_num >= cmd_array_length)
-				status = CMD_STATUS_UNKNOWN_CMD;
+			// check if arg specification is valid
+			if (nargs_max > CMD_MAX_ARGS || nargs_min < 0)
+			{
+				extra = (uint32_t)cmd_num;
+				status = CMD_STATUS_EXEC_FAILED;
+			}
+
+			// check argument count
+			if (ntokens < nargs_min+1)
+			{
+				extra = nargs_min; // provide nearest correct argument count
+				status = CMD_STATUS_ARG_TOO_FEW;
+			}
+			else if (ntokens > nargs_max+1)
+			{
+				extra = nargs_max; // provide nearest correct argument count
+				status = CMD_STATUS_ARG_TOO_MANY;
+			}
 
 			if (status == CMD_STATUS_OK)
 			{
-				// command found
-				int_fast8_t nargs_max = strlen(cmd_array[cmd_num].arg_types);
-				int_fast8_t nargs_min = nargs_max - cmd_array[cmd_num].arg_optional;
-
-				// check if arg specification is valid
-				if (nargs_max > CMD_MAX_ARGS || nargs_min < 0)
+				// convert name & args from strings to cmd_arg_t variants
+				cmd_arg_convert(tokens[0], CMD_ARG_STRING, &(arg_buffer[0]));
+				for (uint_fast8_t t = 1; t < ntokens; t ++)
 				{
-					extra = (uint32_t)cmd_num;
-					status = CMD_STATUS_EXEC_FAILED;
-				}
-
-				// check argument count
-				if (num_tokens < nargs_min+1)
-				{
-					extra = nargs_min; // provide nearest correct argument count
-					status = CMD_STATUS_ARG_TOO_FEW;
-				}
-				else if (num_tokens > nargs_max+1)
-				{
-					extra = nargs_max; // provide nearest correct argument count
-					status = CMD_STATUS_ARG_TOO_MANY;
+					status = cmd_arg_convert(tokens[t], cmd_array[cmd_num].arg_types[t-1], &(arg_buffer[t]));
+					if (status != CMD_STATUS_OK)
+					{
+						extra = t;
+						break;
+					}
 				}
 
 				if (status == CMD_STATUS_OK)
 				{
-					// convert name & args from strings to cmd_arg_t variants
-					cmd_arg_convert(tokens[0], CMD_ARG_STRING, &(arg_buffer[0]));
-					for (uint_fast8_t t = 1; t < num_tokens; t ++)
-					{
-						status = cmd_arg_convert(tokens[t], cmd_array[cmd_num].arg_types[t-1], &(arg_buffer[t]));
-						if (status != CMD_STATUS_OK)
-						{
-							extra = t;
-							break;
-						}
-					}
-
-					if (status == CMD_STATUS_OK)
-					{
-						// call the command handler
-						extra = cmd_num; // provide command number for extracting additional info
-						status = cmd_array[cmd_num].handler(num_tokens, arg_buffer, &extra);
-					}
+					// call the command handler
+					extra = cmd_num; // provide command number for extracting additional info
+					status = cmd_array[cmd_num].handler(ntokens, arg_buffer, &extra);
 				}
 			}
-
-			cmd_response_handler(num_tokens, tokens, status, &extra);
 		}
+
+		cmd_response_handler(ntokens, tokens, status, &extra);
 	}
-}*/
+}
 
 const char *cmd_status_message(cmd_status_t status)
 {
@@ -165,6 +166,7 @@ const char *cmd_status_message(cmd_status_t status)
 		case CMD_STATUS_ARG_TOO_MANY: return "Too many arguments";
 		case CMD_STATUS_ARG_TOO_FEW: return "Too few arguments";
 		case CMD_STATUS_ARG_FORMAT: return "Incorrect argument format";
+		case CMD_STATUS_ARG_INVALID: return "Invalid argument";
 		case CMD_STATUS_ARG_TOO_LOW: return "Parameter value too low";
 		case CMD_STATUS_ARG_TOO_HIGH: return "Parameter value too high";
 		case CMD_STATUS_EXEC_FAILED: return "Execution failed";
@@ -248,46 +250,69 @@ uint32_t cmd_arg_print(const cmd_arg_t *v)
 	}
 }
 
-void cmd_tokenizer(cmd_tokenizer_state_t *s, char c)
+uint_fast8_t cmd_tokenize(char *buffer,
+                          char del,
+                          bool quotes,
+                          char **tokens,
+                          uint_fast8_t token_max)
 {
-	if (c == '\'' && !s->q2)
-		s->q1 ^= true;
-	if (c == '\"' && !s->q1)
-		s->q2 ^= true;
+	bool q1 = false;		// 'inside single quotes' flag
+	bool q2 = false;		// "inside double quotes" flag
+	bool q1_prev = false;	// q1 delayed
+	bool q2_prev = false;	// q2 delayed
+	bool inside = false;	// 'currently inside a token' flag
+	char *pi = buffer;		// buffer read pointer
+	char *po = buffer;		// buffer write pointer
+	uint_fast8_t token_ctr = 0;
 
-	bool iq1 = s->q1 || s->q1_prev;
-	bool iq2 = s->q2 || s->q2_prev;
-	s->q1_prev = s->q1;
-	s->q2_prev = s->q2;
-
-	// skip control quotes
-	if (!s->quotes && ((c == '\'' && iq1) || (c == '\"' && iq2)))
-		return;
-
-	if (s->ptr - s->buffer < CMD_MAX_LINE_LENGTH)
+	while (*pi != '\0')
 	{
-		// add new character to the buffer
-		s->ptr[0] = c;
+		if (*pi == '\'' && !q2)
+			q1 ^= true;
+		if (*pi == '\"' && !q1)
+			q2 ^= true;
 
-		// check for a token start
-		if (!s->inside && c != s->del && (s->ptr == s->buffer || s->ptr[-1] == s->del || s->ptr[-1] == '\0'))
+		// check if we are inside single or double quotes:
+		// example: test"qq'qq'qq"eee'bla"bla"bla'nnn
+		// iq1:     _________________^^^^^^^^^^^^^___
+		// iq2:     ____^^^^^^^^^^___________________
+		// prev values are required for correct skipping
+		bool iq1 = q1 || q1_prev;
+		bool iq2 = q2 || q2_prev;
+
+		// control quotes are skipped here if quotes == false
+		if (quotes || !((*pi == '\'' && iq1) || (*pi == '\"' && iq2)))
 		{
-			// token start found, add to the token list
-			if (s->token_ctr < CMD_MAX_COMMANDS)
-				s->tokens[s->token_ctr ++] = s->ptr;
-			s->inside = true;
+			// add new character to the buffer
+			*po = *pi;
+
+			// check for a token start
+			if (!inside && *pi != del && (po == buffer || po[-1] == del || po[-1] == '\0'))
+			{
+				// token start found, add to the token list
+				if (token_ctr < token_max)
+					tokens[token_ctr ++] = po;
+				inside = true;
+			}
+
+			// when outside quotes, check for a token end and mark it with '\0'
+			if (inside && !iq1 && !iq2 && *pi == del && po > buffer && po[-1] != del)
+			{
+				*po = '\0';
+				inside = false;
+			}
+
+			po ++;
 		}
 
-		// when outside quotes, check for a token end and mark it with '\0'
-		if (s->inside && !iq1 && !iq2 && c == s->del && s->ptr > s->buffer && s->ptr[-1] != s->del)
-		{
-			// (get here when reading symbol next to closing quote: "V" in eee'blablba'V;)
-			s->ptr[0] = '\0';
-			s->inside = false;
-		}
-
-		s->ptr ++;
+		pi ++;
+		q1_prev = q1;
+		q2_prev = q2;
 	}
+
+	// terminate last token
+	*po = '\0';
+	return token_ctr;
 }
 
 cmd_status_t cmd_strtoul2(const char *s, uint32_t *result, uint32_t radix)
@@ -350,12 +375,13 @@ cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra)
 				cmd_help_handler0(i);
 				return CMD_STATUS_OK;
 			}
-		return CMD_STATUS_UNKNOWN_CMD;
+		*extra = 1;
+		return CMD_STATUS_ARG_INVALID;
 	}
 	else
 	{
 		// list all commands
-		printf("%"CMD_MAX_NAME_LENGTH"s%s\n\n", "", "List of supported commands:");
+		printf("%"CMD_MAX_NAME_LENGTH"s%s\n\n", "", " List of supported commands:");
 		for (i = 0; i < cmd_array_length; i ++)
 			cmd_help_handler0(i);
 	}
