@@ -18,30 +18,3 @@ int main (int argc, char *argv[])
 	printf("res=%f status=%s\r\n", x, cmd_status_message(status));*/
 }
 
-int _write(int fd, char * str, int len)
-{
-	return 0;
-}
-
-struct __FILE
-{
-  int handle;
-  /* Whatever you require here. If the only file you are using is */
-  /* standard output using printf() for debugging, no file handling */
-  /* is required. */
-};
-
-/* FILE is typedef’d in stdio.h. */
-FILE __stdout;
-
-int fputc(int ch, FILE *f)
-{
-  /* Your implementation of fputc(). */
-  return ch;
-}
-
-int ferror(FILE *f)
-{
-  /* Your implementation of ferror(). */
-  return 0;
-}
