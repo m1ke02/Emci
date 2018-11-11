@@ -7,27 +7,29 @@
 #include <errno.h>
 #include <math.h>
 
-#define CMD_COMMAND_DELIMITERS ";"
+#define CMD_COMMAND_DEL ';'
 #define CMD_PARAM_DELIMITERS " "
 
-static char cmd_buffer[CMD_MAX_COMMAND_LENGTH+1]; // plus 1 for '\0'
+static char cmd_buffer[CMD_MAX_LINE_LENGTH+1]; // plus 1 for '\0'
 static cmd_arg_t arg_buffer[CMD_MAX_ARGS+1]; // plus 1 for command name
 
 static cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v);
-static void cmd_help_handler0(uint32_t i);
+static void cmd_help_handler0(uint_fast8_t i);
 
 extern cmd_command_t cmd_array[];
-extern uint32_t cmd_array_length;
+extern uint_fast8_t cmd_array_length;
 
 void cmd_main_loop()
 {
 	int c;
-	bool q1 = false;
-	bool q1_prev = false;
-	bool q2 = false;
-	bool q2_prev = false;
-	char *buf = cmd_buffer;
-	uint32_t i = 0;
+	char *cmd_tokens[CMD_MAX_COMMANDS];
+	cmd_tokenizer_state_t ts;
+	
+	memset(&ts, 0, sizeof(ts));
+	ts.del = CMD_COMMAND_DEL;
+	ts.quotes = false;
+	ts.buffer = ts.ptr = cmd_buffer;
+	ts.tokens = cmd_tokens;
 
 	while (1)
 	{
@@ -36,22 +38,8 @@ void cmd_main_loop()
 		c = (char)c;
 
 		#if CMD_ECHO_INPUT == 1
-		putc(c, stdin);
+		putc(c, stdout);
 		#endif
-
-		if (c == '\'' && !q2)
-			q1 ^= true;
-		if (c == '\"' && !q1)
-			q2 ^= true;
-
-		// remove control quotes from resulting command string
-		if ((c == '\'' && (q1 || q1_prev)) ||
-			(c == '\"' && (q2 || q2_prev)))
-			continue;
-
-		// replace spaces inside quotes with space markers
-		if (c == ' ' && (q1 || q2))
-			c = '_';
 
 		// remove several special characters
 		if (c == '\r' || c == '\t')
@@ -60,41 +48,43 @@ void cmd_main_loop()
 		if (c == '\n')
 		{
 			// process command completion
-			*buf = '\0';
+			*(ts.ptr) = '\0';
 
 			// cmd handler...
-			cmd_process_line(cmd_buffer);
-			//printf("{%s}\n", cmd_buffer);
+			printf("Done!\n");
+			printf("buffer=[%s]\n", ts.buffer);
+			for (uint8_t i = 0; i < ts.token_ctr; i ++)
+			{
+				printf("token%d=[%s]\n", i, ts.tokens[i]);
+			}
+			//cmd_process_line(cmd_buffer);
 
 			// prepare to next command processing
-			buf = cmd_buffer; i = 0;
-			q1 = false;
-			q2 = false;
+			memset(&ts, 0, sizeof(ts));
+			ts.del = CMD_COMMAND_DEL;
+			ts.quotes = false;
+			ts.buffer = ts.ptr = cmd_buffer;
+			ts.tokens = cmd_tokens;
 		}
-		else if (i < CMD_MAX_COMMAND_LENGTH)
+		else
 		{
-			// add character to the command buffer
-			*buf++ = (char)c;
-			i ++;
+			cmd_tokenizer(&ts, c);
 		}
-
-		q1_prev = q1;
-		q2_prev = q2;
 	}
 }
 
-void cmd_process_line(char *line)
+/*void cmd_process_line(char *line)
 {
 	char *cmd;
 	char *tokens[CMD_MAX_ARGS+1]; // plus 1 for command name
 
-	/* walk through commands */
+	// walk through commands
 	char *cmd_iter = line;
 	while ((cmd = strtok_r(cmd_iter, CMD_COMMAND_DELIMITERS, &cmd_iter)))
 	{
-		/* walk through command tokens */
+		// walk through command tokens
 		char *token_iter = cmd;
-		uint32_t num_tokens = 0;
+		uint_fast8_t num_tokens = 0;
 		while ((num_tokens < CMD_MAX_ARGS+1) &&
 			(tokens[num_tokens] = strtok_r(token_iter, CMD_PARAM_DELIMITERS, &token_iter)))
 			num_tokens ++;
@@ -106,7 +96,7 @@ void cmd_process_line(char *line)
 			uint32_t extra = 0;
 
 			// search for requested command
-			int32_t cmd_num;
+			uint_fast8_t cmd_num;
 			for (cmd_num = 0; cmd_num < cmd_array_length; cmd_num ++)
 				if (strcmp(cmd_array[cmd_num].name, tokens[0]) == 0)
 					break;
@@ -116,8 +106,8 @@ void cmd_process_line(char *line)
 			if (status == CMD_STATUS_OK)
 			{
 				// command found
-				int32_t nargs_max = strlen(cmd_array[cmd_num].arg_types);
-				int32_t nargs_min = nargs_max - cmd_array[cmd_num].arg_optional;
+				int_fast8_t nargs_max = strlen(cmd_array[cmd_num].arg_types);
+				int_fast8_t nargs_min = nargs_max - cmd_array[cmd_num].arg_optional;
 
 				// check if arg specification is valid
 				if (nargs_max > CMD_MAX_ARGS || nargs_min < 0)
@@ -142,7 +132,7 @@ void cmd_process_line(char *line)
 				{
 					// convert name & args from strings to cmd_arg_t variants
 					cmd_arg_convert(tokens[0], CMD_ARG_STRING, &(arg_buffer[0]));
-					for (uint32_t t = 1; t < num_tokens; t ++)
+					for (uint_fast8_t t = 1; t < num_tokens; t ++)
 					{
 						status = cmd_arg_convert(tokens[t], cmd_array[cmd_num].arg_types[t-1], &(arg_buffer[t]));
 						if (status != CMD_STATUS_OK)
@@ -161,10 +151,10 @@ void cmd_process_line(char *line)
 				}
 			}
 
-			cmd_response_handler(num_tokens, tokens, status, extra);
+			cmd_response_handler(num_tokens, tokens, status, &extra);
 		}
 	}
-}
+}*/
 
 const char *cmd_status_message(cmd_status_t status)
 {
@@ -258,6 +248,48 @@ uint32_t cmd_arg_print(const cmd_arg_t *v)
 	}
 }
 
+void cmd_tokenizer(cmd_tokenizer_state_t *s, char c)
+{
+	if (c == '\'' && !s->q2)
+		s->q1 ^= true;
+	if (c == '\"' && !s->q1)
+		s->q2 ^= true;
+
+	bool iq1 = s->q1 || s->q1_prev;
+	bool iq2 = s->q2 || s->q2_prev;
+	s->q1_prev = s->q1;
+	s->q2_prev = s->q2;
+
+	// skip control quotes
+	if (!s->quotes && ((c == '\'' && iq1) || (c == '\"' && iq2)))
+		return;
+
+	if (s->ptr - s->buffer < CMD_MAX_LINE_LENGTH)
+	{
+		// add new character to the buffer
+		s->ptr[0] = c;
+
+		// check for a token start
+		if (!s->inside && c != s->del && (s->ptr == s->buffer || s->ptr[-1] == s->del || s->ptr[-1] == '\0'))
+		{
+			// token start found, add to the token list
+			if (s->token_ctr < CMD_MAX_COMMANDS)
+				s->tokens[s->token_ctr ++] = s->ptr;
+			s->inside = true;
+		}
+
+		// when outside quotes, check for a token end and mark it with '\0'
+		if (s->inside && !iq1 && !iq2 && c == s->del && s->ptr > s->buffer && s->ptr[-1] != s->del)
+		{
+			// (get here when reading symbol next to closing quote: "V" in eee'blablba'V;)
+			s->ptr[0] = '\0';
+			s->inside = false;
+		}
+
+		s->ptr ++;
+	}
+}
+
 cmd_status_t cmd_strtoul2(const char *s, uint32_t *result, uint32_t radix)
 {
 	// skip whitespace
@@ -305,9 +337,9 @@ cmd_status_t cmd_strtof2(const char *s, float *result)
 		return CMD_STATUS_OK;
 }
 
-cmd_status_t cmd_help_handler(uint32_t argc, cmd_arg_t *argv, uint32_t *extra)
+cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra)
 {
-	uint32_t i;
+	uint_fast8_t i;
 
 	if (argc == 2)
 	{
@@ -331,12 +363,12 @@ cmd_status_t cmd_help_handler(uint32_t argc, cmd_arg_t *argv, uint32_t *extra)
 	return CMD_STATUS_OK;
 }
 
-static void cmd_help_handler0(uint32_t i)
+static void cmd_help_handler0(uint_fast8_t i)
 {
 	printf("%"CMD_MAX_NAME_LENGTH"s", cmd_array[i].name);
 	const char *atp = cmd_array[i].arg_types;
 	const char *adp = cmd_array[i].arg_dscr;
-	int32_t req = strlen(atp) - cmd_array[i].arg_optional;
+	int_fast8_t req = strlen(atp) - cmd_array[i].arg_optional;
 	// use default names if not specified (only CMD_MAX_ARGS <= 8 supported!)
 	if (!adp) adp = "p1\0p2\0p3\0p4\0p5\0p6\0p7\0p8\0";
 	// list all args

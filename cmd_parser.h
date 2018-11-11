@@ -42,21 +42,37 @@ typedef struct
 typedef struct
 {
 	const char *name;
-	cmd_status_t (*handler)(uint32_t argc, cmd_arg_t *argv, uint32_t *extra);
+	cmd_status_t (*handler)(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
 	const char *arg_types;
-	uint32_t arg_optional;
+	uint8_t arg_optional;
 	const char *cmd_dscr;
 	const char *arg_dscr;
 } cmd_command_t;
+
+typedef struct
+{
+	char del;		// token delimiter
+	bool quotes;	// put quotes in buffer?
+	bool q1;		// 'inside single quotes' flag
+	bool q2;		// "inside double quotes" flag
+	bool q1_prev;	// q1 delayed state
+	bool q2_prev;	// q2 delayed state
+	bool inside;	// currently inside a token
+	char *buffer;	// buffer to populate
+	char *ptr;		// buffer pointer
+	char **tokens;
+	uint_fast8_t token_ctr;
+} cmd_tokenizer_state_t;
 
 void cmd_main_loop();
 void cmd_process_line(char *line);
 const char *cmd_status_message(cmd_status_t status);
 const char *cmd_arg_type_message(cmd_arg_type_t type);
 uint32_t cmd_arg_print(const cmd_arg_t *v);
+void cmd_tokenizer(cmd_tokenizer_state_t *s, char c);
 cmd_status_t cmd_strtoul2(const char *s, uint32_t *result, uint32_t radix);
 cmd_status_t cmd_strtol2(const char *s, int32_t *result, uint32_t radix);
 cmd_status_t cmd_strtof2(const char *s, float *result);
-cmd_status_t cmd_help_handler(uint32_t argc, cmd_arg_t *argv, uint32_t *extra);
+cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
 
 #endif
