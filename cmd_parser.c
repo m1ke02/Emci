@@ -22,13 +22,14 @@ extern uint_fast8_t cmd_array_length;
 void cmd_main_loop()
 {
 	int c;
-	char *ptr;
+	char *cursor;
 	char *tokens[CMD_MAX_COMMANDS];
 
 	while (1)
 	{
 		// prepare to command line parsing
-		ptr = cmd_buffer;
+		cursor = cmd_buffer;
+		cmd_prompt();
 
 		// read command line char by char
 		while (1)
@@ -37,9 +38,9 @@ void cmd_main_loop()
 				return;
 			
 			// backspace key support for terminal
-			if (c == '\x7F' && ptr > cmd_buffer)
+			if (c == '\x7F' && cursor > cmd_buffer)
 			{
-				ptr --;
+				cursor --;
 				putc('\x7F', stdout);
 				continue;
 			}
@@ -55,7 +56,7 @@ void cmd_main_loop()
 			if (c == '\n')
 			{
 				// terminate last command
-				*ptr = '\0';
+				*cursor = '\0';
 
 				uint_fast8_t ntokens = cmd_tokenize(cmd_buffer, CMD_COMMAND_DEL, true,
 					tokens, sizeof(tokens) / sizeof(tokens[0]));
@@ -63,16 +64,16 @@ void cmd_main_loop()
 				// cmd handler...
 				for (uint_fast8_t i = 0; i < ntokens; i ++)
 				{
-					printf("cmd%d=[%s]\n", i, tokens[i]);
+					//printf("cmd%d=[%s]\n", i, tokens[i]);
 					cmd_process_command(tokens[i]);
 				}
 
 				// we are done, go to next line
 				break;
 			}
-			else if (ptr - cmd_buffer < CMD_MAX_LINE_LENGTH)
+			else if (cursor - cmd_buffer < CMD_MAX_LINE_LENGTH)
 			{
-				*ptr++ = c;
+				*cursor++ = c;
 			}
 		}
 	}
@@ -86,10 +87,10 @@ void cmd_process_command(char *command)
 	uint_fast8_t ntokens = cmd_tokenize(command, CMD_ARG_DEL, false,
 		tokens, sizeof(tokens) / sizeof(tokens[0]));
 
-	for (uint_fast8_t i = 0; i < ntokens; i ++)
+	/*for (uint_fast8_t i = 0; i < ntokens; i ++)
 	{
 		printf("   arg%d=[%s]\n", i, tokens[i]);
-	}
+	}*/
 
 	if (ntokens > 0)
 	{
@@ -406,4 +407,9 @@ static void cmd_help_handler0(uint_fast8_t i)
 		req --;
 	}
 	printf("\n %"CMD_MAX_NAME_LENGTH"s%s\n\n", "", cmd_array[i].cmd_dscr);
+}
+
+cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra)
+{
+	return CMD_STATUS_OK;
 }

@@ -46,6 +46,7 @@ typedef struct
 	cmd_status_t (*handler)(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
 	const char *arg_types;
 	uint8_t arg_optional;
+	void *extra;
 	const char *cmd_dscr;
 	const char *arg_dscr;
 } cmd_command_t;
@@ -64,5 +65,6 @@ cmd_status_t cmd_strtoul2(const char *s, uint32_t *result, uint32_t radix);
 cmd_status_t cmd_strtol2(const char *s, int32_t *result, uint32_t radix);
 cmd_status_t cmd_strtof2(const char *s, float *result);
 cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
+cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
 
 #endif
