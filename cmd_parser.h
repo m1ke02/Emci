@@ -18,12 +18,13 @@ typedef enum
 {
 	CMD_STATUS_OK = 0,
 	CMD_STATUS_UNKNOWN_CMD = -1,
-	CMD_STATUS_ARG_TOO_MANY = -2,
-	CMD_STATUS_ARG_TOO_FEW = -3,
-	CMD_STATUS_ARG_FORMAT = -4,
-	CMD_STATUS_ARG_INVALID = -5,
-	CMD_STATUS_ARG_TOO_LOW = -6,
-	CMD_STATUS_ARG_TOO_HIGH = -7,
+	CMD_STATUS_PROFILE_ERROR = -2,
+	CMD_STATUS_ARG_TOO_MANY = -3,
+	CMD_STATUS_ARG_TOO_FEW = -4,
+	CMD_STATUS_ARG_FORMAT = -5,
+	CMD_STATUS_ARG_INVALID = -6,
+	CMD_STATUS_ARG_TOO_LOW = -7,
+	CMD_STATUS_ARG_TOO_HIGH = -8,
 	CMD_STATUS_EXEC_FAILED = -100
 } cmd_status_t;
 
@@ -40,10 +41,10 @@ typedef struct
 	};
 } cmd_arg_t;
 
-typedef struct
+typedef struct cmd_command_tag
 {
 	const char *name;
-	cmd_status_t (*handler)(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
+	cmd_status_t (*handler)(uint8_t argc, cmd_arg_t *argv, struct cmd_command_tag *pc);
 	const char *arg_types;
 	uint8_t arg_optional;
 	void *extra;
@@ -64,7 +65,5 @@ uint_fast8_t cmd_tokenize(char *buffer,
 cmd_status_t cmd_strtoul2(const char *s, uint32_t *result, uint32_t radix);
 cmd_status_t cmd_strtol2(const char *s, int32_t *result, uint32_t radix);
 cmd_status_t cmd_strtof2(const char *s, float *result);
-cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
-cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
 
 #endif

@@ -13,10 +13,10 @@
 #define cmd_printf(...) printf(__VA_ARGS__)
 
 void cmd_prompt();
-cmd_status_t cmd_universal_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
-cmd_status_t cmd_about_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
-cmd_status_t cmd_setpoint_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
-cmd_status_t cmd_test_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra);
-void cmd_response_handler(uint8_t argc, char *argv[], cmd_status_t status, uint32_t *extra);
+cmd_status_t cmd_about_handler		(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc);
+cmd_status_t cmd_setpoint_handler	(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc);
+cmd_status_t cmd_test_handler		(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc);
+
+void cmd_response_handler			(uint8_t argc, char *raw_argv[], cmd_status_t status, uint32_t param);
 
 #endif

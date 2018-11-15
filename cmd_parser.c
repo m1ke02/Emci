@@ -14,10 +14,9 @@ static char cmd_buffer[CMD_MAX_LINE_LENGTH+1]; // plus 1 for '\0'
 static cmd_arg_t arg_buffer[CMD_MAX_ARGS+1]; // plus 1 for command name
 
 static cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v);
-static void cmd_help_handler0(uint_fast8_t i);
 
-extern cmd_command_t cmd_array[];
-extern uint_fast8_t cmd_array_length;
+extern const cmd_command_t cmd_array[];
+extern const uint_fast8_t cmd_array_length;
 
 void cmd_main_loop()
 {
@@ -96,7 +95,7 @@ void cmd_process_command(char *command)
 	{
 		// command parsing/execution status
 		cmd_status_t status = CMD_STATUS_OK;
-		uint32_t extra = 0;
+		uint32_t param = 0;
 
 		// search for requested command
 		uint_fast8_t cmd_num;
@@ -115,19 +114,19 @@ void cmd_process_command(char *command)
 			// check if arg specification is valid
 			if (nargs_max > CMD_MAX_ARGS || nargs_min < 0)
 			{
-				extra = (uint32_t)cmd_num;
-				status = CMD_STATUS_EXEC_FAILED;
+				param = (uint32_t)cmd_num;
+				status = CMD_STATUS_PROFILE_ERROR;
 			}
 
 			// check argument count
 			if (ntokens < nargs_min+1)
 			{
-				extra = nargs_min; // provide nearest correct argument count
+				param = nargs_min; // set to nearest correct argument count
 				status = CMD_STATUS_ARG_TOO_FEW;
 			}
 			else if (ntokens > nargs_max+1)
 			{
-				extra = nargs_max; // provide nearest correct argument count
+				param = nargs_max; // set to nearest correct argument count
 				status = CMD_STATUS_ARG_TOO_MANY;
 			}
 
@@ -140,7 +139,7 @@ void cmd_process_command(char *command)
 					status = cmd_arg_convert(tokens[t], cmd_array[cmd_num].arg_types[t-1], &(arg_buffer[t]));
 					if (status != CMD_STATUS_OK)
 					{
-						extra = t;
+						param = t;
 						break;
 					}
 				}
@@ -148,13 +147,13 @@ void cmd_process_command(char *command)
 				if (status == CMD_STATUS_OK)
 				{
 					// call the command handler
-					extra = cmd_num; // provide command number for extracting additional info
-					status = cmd_array[cmd_num].handler(ntokens, arg_buffer, &extra);
+					status = cmd_array[cmd_num].handler(ntokens, arg_buffer,
+						(cmd_command_t *)&(cmd_array[cmd_num]));
 				}
 			}
 		}
 
-		cmd_response_handler(ntokens, tokens, status, &extra);
+		cmd_response_handler(ntokens, tokens, status, param);
 	}
 }
 
@@ -164,6 +163,7 @@ const char *cmd_status_message(cmd_status_t status)
 	{
 		case CMD_STATUS_OK: return "OK";
 		case CMD_STATUS_UNKNOWN_CMD: return "Unknown command";
+		case CMD_STATUS_PROFILE_ERROR: return "Profile error";
 		case CMD_STATUS_ARG_TOO_MANY: return "Too many arguments";
 		case CMD_STATUS_ARG_TOO_FEW: return "Too few arguments";
 		case CMD_STATUS_ARG_FORMAT: return "Incorrect argument format";
@@ -361,55 +361,4 @@ cmd_status_t cmd_strtof2(const char *s, float *result)
 		return CMD_STATUS_ARG_FORMAT;
 	else
 		return CMD_STATUS_OK;
-}
-
-cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra)
-{
-	uint_fast8_t i;
-
-	if (argc == 2)
-	{
-		// find specific command
-		for (i = 0; i < cmd_array_length; i ++)
-			if (strcmp(cmd_array[i].name, argv[1].s) == 0)
-			{
-				cmd_help_handler0(i);
-				return CMD_STATUS_OK;
-			}
-		*extra = 1;
-		return CMD_STATUS_ARG_INVALID;
-	}
-	else
-	{
-		// list all commands
-		printf("%"CMD_MAX_NAME_LENGTH"s%s\n\n", "", " List of supported commands:");
-		for (i = 0; i < cmd_array_length; i ++)
-			cmd_help_handler0(i);
-	}
-
-	return CMD_STATUS_OK;
-}
-
-static void cmd_help_handler0(uint_fast8_t i)
-{
-	printf("%"CMD_MAX_NAME_LENGTH"s", cmd_array[i].name);
-	const char *atp = cmd_array[i].arg_types;
-	const char *adp = cmd_array[i].arg_dscr;
-	int_fast8_t req = strlen(atp) - cmd_array[i].arg_optional;
-	// use default names if not specified (only CMD_MAX_ARGS <= 8 supported!)
-	if (!adp) adp = "p1\0p2\0p3\0p4\0p5\0p6\0p7\0p8\0";
-	// list all args
-	while (*atp)
-	{
-		printf((req > 0)? " %s:%s": " [%s:%s]", adp, cmd_arg_type_message(*atp));
-		adp += strlen(adp)+1;
-		atp ++;
-		req --;
-	}
-	printf("\n %"CMD_MAX_NAME_LENGTH"s%s\n\n", "", cmd_array[i].cmd_dscr);
-}
-
-cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, uint32_t *extra)
-{
-	return CMD_STATUS_OK;
 }
