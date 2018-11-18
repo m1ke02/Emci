@@ -1,50 +1,27 @@
 #ifndef CMD_PARSER_H
 #define CMD_PARSER_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "cmd_arg.h"
 
-typedef enum
-{
-	CMD_ARG_VOID = '\0',
-	CMD_ARG_UINT32 = 'u',
-	CMD_ARG_INT32 = 'i',
-	CMD_ARG_FLOAT = 'f',
-	CMD_ARG_BOOL = 'b',
-	CMD_ARG_STRING = 's'
-} cmd_arg_type_t;
+#define CMD_ECHO_INPUT			0
+#define CMD_MAX_LINE_LENGTH		32
+#define CMD_MAX_COMMANDS		8
+#define CMD_MAX_ARGS			10		// see "if (!adp)" line inside cmd_help_handler()
+#define CMD_MAX_NAME_LENGTH		"10"	// note the quotes
 
-typedef enum
+typedef struct cmd_response_tag
 {
-	CMD_STATUS_OK = 0,
-	CMD_STATUS_UNKNOWN_CMD = -1,
-	CMD_STATUS_PROFILE_ERROR = -2,
-	CMD_STATUS_ARG_TOO_MANY = -3,
-	CMD_STATUS_ARG_TOO_FEW = -4,
-	CMD_STATUS_ARG_FORMAT = -5,
-	CMD_STATUS_ARG_INVALID = -6,
-	CMD_STATUS_ARG_TOO_LOW = -7,
-	CMD_STATUS_ARG_TOO_HIGH = -8,
-	CMD_STATUS_EXEC_FAILED = -100
-} cmd_status_t;
+	cmd_status_t status;
+	uint8_t param;
+	char *msg;
+} cmd_response_t;
 
-typedef struct
-{
-	cmd_arg_type_t type;
-	union
-	{
-		uint32_t u;
-		int32_t i;
-		float f;
-		bool b;
-		char *s;
-	};
-} cmd_arg_t;
+struct cmd_env_tag;
 
 typedef struct cmd_command_tag
 {
 	const char *name;
-	cmd_status_t (*handler)(uint8_t argc, cmd_arg_t *argv, struct cmd_command_tag *pc);
+	cmd_status_t (*handler)(uint8_t argc, cmd_arg_t *argv, struct cmd_env_tag *env);
 	const char *arg_types;
 	uint8_t arg_optional;
 	void *extra;
@@ -52,11 +29,17 @@ typedef struct cmd_command_tag
 	const char *arg_dscr;
 } cmd_command_t;
 
-void cmd_main_loop();
-void cmd_process_command(char *command);
+typedef struct cmd_env_tag
+{
+	char cmd_buffer[CMD_MAX_LINE_LENGTH+1]; // plus 1 for '\0'
+	cmd_arg_t arg_buffer[CMD_MAX_ARGS+1]; // plus 1 for command name
+	cmd_command_t *cmd;
+	cmd_response_t resp;
+} cmd_env_t;
+
+void cmd_main_loop(cmd_env_t *env);
+void cmd_process_command(char *command, cmd_env_t *env);
 const char *cmd_status_message(cmd_status_t status);
-const char *cmd_arg_type_message(cmd_arg_type_t type);
-uint32_t cmd_arg_print(const cmd_arg_t *v);
 uint_fast8_t cmd_tokenize(char *buffer,
                           char del,
                           bool quotes,

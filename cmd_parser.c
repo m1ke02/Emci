@@ -10,15 +10,16 @@
 #define CMD_COMMAND_DEL ';'
 #define CMD_ARG_DEL ' '
 
-static char cmd_buffer[CMD_MAX_LINE_LENGTH+1]; // plus 1 for '\0'
-static cmd_arg_t arg_buffer[CMD_MAX_ARGS+1]; // plus 1 for command name
+//	external app-dependent functions defined in cmd_profile.c
+void cmd_prompt();
+const char *cmd_app_status_message(cmd_status_t status);
 
-static cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v);
+static void cmd_response_handler(uint8_t argc, char *raw_argv[], cmd_response_t *resp);
 
 extern const cmd_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
 
-void cmd_main_loop()
+void cmd_main_loop(cmd_env_t *env)
 {
 	int c;
 	char *cursor;
@@ -27,7 +28,7 @@ void cmd_main_loop()
 	while (1)
 	{
 		// prepare to command line parsing
-		cursor = cmd_buffer;
+		cursor = env->cmd_buffer;
 		cmd_prompt();
 
 		// read command line char by char
@@ -37,7 +38,7 @@ void cmd_main_loop()
 				return;
 			
 			// backspace key support for terminal
-			if (c == '\x7F' && cursor > cmd_buffer)
+			if (c == '\x7F' && cursor > env->cmd_buffer)
 			{
 				cursor --;
 				putc('\x7F', stdout);
@@ -57,20 +58,20 @@ void cmd_main_loop()
 				// terminate last command
 				*cursor = '\0';
 
-				uint_fast8_t ntokens = cmd_tokenize(cmd_buffer, CMD_COMMAND_DEL, true,
+				uint_fast8_t ntokens = cmd_tokenize(env->cmd_buffer, CMD_COMMAND_DEL, true,
 					tokens, sizeof(tokens) / sizeof(tokens[0]));
 
-				// cmd handler...
+				// run command handler
 				for (uint_fast8_t i = 0; i < ntokens; i ++)
 				{
 					//printf("cmd%d=[%s]\n", i, tokens[i]);
-					cmd_process_command(tokens[i]);
+					cmd_process_command(tokens[i], env);
 				}
 
 				// we are done, go to next line
 				break;
 			}
-			else if (cursor - cmd_buffer < CMD_MAX_LINE_LENGTH)
+			else if (cursor - env->cmd_buffer < CMD_MAX_LINE_LENGTH)
 			{
 				*cursor++ = c;
 			}
@@ -78,7 +79,7 @@ void cmd_main_loop()
 	}
 }
 
-void cmd_process_command(char *command)
+void cmd_process_command(char *command, cmd_env_t *env)
 {
 	char *tokens[CMD_MAX_ARGS+1]; // plus 1 for command name
 
@@ -93,9 +94,9 @@ void cmd_process_command(char *command)
 
 	if (ntokens > 0)
 	{
-		// command parsing/execution status
-		cmd_status_t status = CMD_STATUS_OK;
-		uint32_t param = 0;
+		env->resp.status = CMD_STATUS_OK;
+		env->resp.msg = NULL;
+		env->resp.param = 0;
 
 		// search for requested command
 		uint_fast8_t cmd_num;
@@ -103,57 +104,94 @@ void cmd_process_command(char *command)
 			if (strcmp(cmd_array[cmd_num].name, tokens[0]) == 0)
 				break;
 		if (cmd_num >= cmd_array_length)
-			status = CMD_STATUS_UNKNOWN_CMD;
+			env->resp.status = CMD_STATUS_UNKNOWN_CMD;
 
-		if (status == CMD_STATUS_OK)
+		if (env->resp.status == CMD_STATUS_OK)
 		{
 			// command found
+			env->cmd = (cmd_command_t *)&(cmd_array[cmd_num]);
 			int_fast8_t nargs_max = strlen(cmd_array[cmd_num].arg_types);
 			int_fast8_t nargs_min = nargs_max - cmd_array[cmd_num].arg_optional;
 
 			// check if arg specification is valid
 			if (nargs_max > CMD_MAX_ARGS || nargs_min < 0)
 			{
-				param = (uint32_t)cmd_num;
-				status = CMD_STATUS_PROFILE_ERROR;
+				env->resp.param = cmd_num;
+				env->resp.msg = "Argument count";
+				env->resp.status = CMD_STATUS_PROFILE_ERROR;
 			}
 
 			// check argument count
 			if (ntokens < nargs_min+1)
 			{
-				param = nargs_min; // set to nearest correct argument count
-				status = CMD_STATUS_ARG_TOO_FEW;
+				env->resp.param = nargs_min; // set to nearest correct argument count
+				env->resp.status = CMD_STATUS_ARG_TOO_FEW;
 			}
 			else if (ntokens > nargs_max+1)
 			{
-				param = nargs_max; // set to nearest correct argument count
-				status = CMD_STATUS_ARG_TOO_MANY;
+				env->resp.param = nargs_max; // set to nearest correct argument count
+				env->resp.status = CMD_STATUS_ARG_TOO_MANY;
 			}
 
-			if (status == CMD_STATUS_OK)
+			if (env->resp.status == CMD_STATUS_OK)
 			{
 				// convert name & args from strings to cmd_arg_t variants
-				cmd_arg_convert(tokens[0], CMD_ARG_STRING, &(arg_buffer[0]));
+				cmd_arg_convert(tokens[0], CMD_ARG_STRING, &(env->arg_buffer[0]));
 				for (uint_fast8_t t = 1; t < ntokens; t ++)
 				{
-					status = cmd_arg_convert(tokens[t], cmd_array[cmd_num].arg_types[t-1], &(arg_buffer[t]));
-					if (status != CMD_STATUS_OK)
+					env->resp.status = cmd_arg_convert(
+						tokens[t], 
+						cmd_array[cmd_num].arg_types[t-1], 
+						&(env->arg_buffer[t])
+					);
+					if (env->resp.status != CMD_STATUS_OK)
 					{
-						param = t;
+						env->resp.param = t;
 						break;
 					}
 				}
 
-				if (status == CMD_STATUS_OK)
+				if (env->resp.status == CMD_STATUS_OK)
 				{
 					// call the command handler
-					status = cmd_array[cmd_num].handler(ntokens, arg_buffer,
-						(cmd_command_t *)&(cmd_array[cmd_num]));
+					env->resp.status = cmd_array[cmd_num].handler(ntokens, env->arg_buffer, env);
 				}
 			}
 		}
 
-		cmd_response_handler(ntokens, tokens, status, param);
+		cmd_response_handler(ntokens, tokens, &(env->resp));
+	}
+}
+
+static void cmd_response_handler(uint8_t argc, char *raw_argv[], cmd_response_t *resp)
+{
+	printf("~%s %d (%s", raw_argv[0], resp->status, cmd_status_message(resp->status));
+
+	switch (resp->status)
+	{
+		case CMD_STATUS_ARG_TOO_MANY:
+		case CMD_STATUS_ARG_TOO_FEW:
+			// param is closest valid number of arguments
+			printf(": required %u but passed %u)\n", resp->param, argc-1);
+			break;
+		case CMD_STATUS_ARG_FORMAT:
+		case CMD_STATUS_ARG_INVALID:
+		case CMD_STATUS_ARG_TOO_HIGH:
+		case CMD_STATUS_ARG_TOO_LOW:
+			// param is number of invalid argument
+			printf(": %s)\n", raw_argv[resp->param]);
+			break;
+		case CMD_STATUS_OK:
+		case CMD_STATUS_UNKNOWN_CMD:
+			printf(")\n");
+			break;
+		case CMD_STATUS_PROFILE_ERROR:
+		default:
+			if (resp->msg)
+				printf(": %s)\n", resp->msg);
+			else
+				printf(")\n");
+			break;
 	}
 }
 
@@ -170,84 +208,11 @@ const char *cmd_status_message(cmd_status_t status)
 		case CMD_STATUS_ARG_INVALID: return "Invalid argument";
 		case CMD_STATUS_ARG_TOO_LOW: return "Parameter value too low";
 		case CMD_STATUS_ARG_TOO_HIGH: return "Parameter value too high";
-		case CMD_STATUS_EXEC_FAILED: return "Execution failed";
-		default: return "?";
-	}
-}
-
-const char *cmd_arg_type_message(cmd_arg_type_t type)
-{
-	switch (type)
-	{
-		case CMD_ARG_VOID: return "void";
-		case CMD_ARG_UINT32: return "uint32";
-		case CMD_ARG_INT32: return "int32";
-		case CMD_ARG_FLOAT: return "float";
-		case CMD_ARG_BOOL: return "bool";
-		case CMD_ARG_STRING: return "str";
-		default: return "?";
-	}
-}
-
-static cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v)
-{
-	cmd_status_t status;
-
-	v->type = type;
-	switch (type)
-	{
-		case CMD_ARG_UINT32:
-			status = cmd_strtoul2(s, &(v->u), 0);
-			if (status != CMD_STATUS_OK) return status;
-			break;
-		case CMD_ARG_INT32:
-			status = cmd_strtol2(s, &(v->i), 0);
-			if (status != CMD_STATUS_OK) return status;
-			break;
-		case CMD_ARG_FLOAT:
-			status = cmd_strtof2(s, &(v->f));
-			if (status != CMD_STATUS_OK) return status;
-			break;
-		case CMD_ARG_BOOL:
-			if (strcmpi(s, "true") == 0 || strcmpi(s, "1") == 0)
-				v->b = true;
-			else if (strcmpi(s, "false") == 0 || strcmpi(s, "0") == 0)
-				v->b = false;
+		default: 
+			if (status >= CMD_STATUS_APP_ERROR_START && status <= CMD_STATUS_APP_ERROR_END)
+				return cmd_app_status_message(status);
 			else
-				return CMD_STATUS_ARG_FORMAT;
-			break;
-		case CMD_ARG_STRING:
-			// don't copy string, just copy the pointer
-			v->s = (char *)s;
-			break;
-		case CMD_ARG_VOID:
-			v->u = 0;
-			break;
-	}
-
-	return CMD_STATUS_OK;
-}
-
-uint32_t cmd_arg_print(const cmd_arg_t *v)
-{
-	const char *type = cmd_arg_type_message(v->type);
-
-	switch (v->type)
-	{
-		case CMD_ARG_UINT32:
-			return printf("%s[%u]", type, v->u);
-		case CMD_ARG_INT32:
-			return printf("%s[%d]", type, v->i);
-		case CMD_ARG_FLOAT:
-			return printf("%s[%f]", type, v->f);
-		case CMD_ARG_BOOL:
-			return printf(v->b? "%s[true]": "%s[false]", type);
-		case CMD_ARG_STRING:
-			return printf("%s[%s]", type, v->s);
-		case CMD_ARG_VOID:
-			return printf("%s[]", type);
-		default:
-			return printf("%s", type);
+				return "?";
 	}
 }
 

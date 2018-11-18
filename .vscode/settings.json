@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "cmd_parser.h": "c",
+        "cmd_profile.h": "c",
+        "math.h": "c",
+        "cmd_arg.h": "c",
+        "cmd_common.h": "c"
+    }
+}

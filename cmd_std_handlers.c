@@ -8,7 +8,7 @@ static void cmd_help_handler0(uint_fast8_t i);
 extern const cmd_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
 
-cmd_status_t cmd_printargs_handler(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc)
+cmd_status_t cmd_printargs_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 {
 	if (argc <= 1)
 	{
@@ -24,7 +24,7 @@ cmd_status_t cmd_printargs_handler(uint8_t argc, cmd_arg_t *argv, cmd_command_t 
 	return CMD_STATUS_OK;
 }
 
-cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc)
+cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 {
 	uint_fast8_t i;
 
@@ -37,7 +37,7 @@ cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc)
 				cmd_help_handler0(i);
 				return CMD_STATUS_OK;
 			}
-		//*extra = 1;
+		env->resp.param = 1;
 		return CMD_STATUS_ARG_INVALID;
 	}
 	else
@@ -70,15 +70,15 @@ static void cmd_help_handler0(uint_fast8_t i)
 	printf("\n %"CMD_MAX_NAME_LENGTH"s%s\n\n", "", cmd_array[i].cmd_dscr);
 }
 
-cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc)
+cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 {
-	cmd_var_handler_data_t *e = (cmd_var_handler_data_t *)pc->extra;
-	cmd_arg_type_t type = pc->arg_types[0];
+	cmd_var_handler_data_t *e = (cmd_var_handler_data_t *)env->cmd->extra;
+	cmd_arg_type_t type = env->cmd->arg_types[0];
 	bool cmp = false;
 
 	// profile consistency check
 	if (e->var == NULL || e->max.type != type || e->min.type != type ||
-		strlen(pc->arg_types) != 1 || type == CMD_ARG_STRING)
+		strlen(env->cmd->arg_types) != 1 || type == CMD_ARG_STRING)
 		return CMD_STATUS_PROFILE_ERROR;
 
 	if (argc == 2)
@@ -94,7 +94,7 @@ cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc)
 
 		if (cmp)
 		{
-			// *extra = 1;
+			env->resp.param = 1;
 			return CMD_STATUS_ARG_TOO_HIGH;
 		}
 
@@ -109,7 +109,7 @@ cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_command_t *pc)
 
 		if (cmp)
 		{
-			// *extra = 1;
+			env->resp.param = 1;
 			return CMD_STATUS_ARG_TOO_LOW;
 		}
 
