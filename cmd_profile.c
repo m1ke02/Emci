@@ -16,7 +16,7 @@ const cmd_command_t cmd_array[] =
 	"Display/change setpoint value", "value"},
 
 	{"fff", cmd_var_handler, "f", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_fff, .min={'f', {.f=.1}}, .max={'f',{.f=.9}}},
+	&(cmd_var_handler_data_t){.var=&cmd_var_fff, .min={'f', {.f=.1}}, .max={'f',{.f=.9}}, .prec=4},
 	"Display/change fff value", "value"},
 
 	{"test", test_handler, "i", 0,

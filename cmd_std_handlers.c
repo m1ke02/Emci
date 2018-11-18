@@ -125,13 +125,17 @@ cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 	}
 	else /*if (argc == 1)*/
 	{
+		char fmt[] = "%.0f\n";
 		// display current value
 		switch (type)
 		{
 			default:
 			case CMD_ARG_UINT32: printf("%u\n", *((uint32_t *)e->var)); break;
 			case CMD_ARG_INT32: printf("%d\n", *((int32_t *)e->var)); break;
-			case CMD_ARG_FLOAT: printf("%f\n", *((float *)e->var)); break;
+			case CMD_ARG_FLOAT:
+				fmt[2] = '0' + ((e->prec <= 9)? e->prec: 9);
+				printf(fmt, *((float *)e->var));
+				break;
 		}
 		return CMD_STATUS_OK;
 	}
