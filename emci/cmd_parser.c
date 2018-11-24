@@ -1,5 +1,4 @@
 #include "cmd_parser.h"
-//#include "../cmd_profile.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +7,7 @@
 #include <math.h>
 
 //	external application-dependent functions
-void cmd_prompt();
+void cmd_prompt(void);
 const char *cmd_app_status_message(cmd_status_t status);
 
 //	external application-dependent variables
@@ -27,6 +26,7 @@ void cmd_main_loop(cmd_env_t *env)
 	{
 		// prepare to command line parsing
 		cursor = env->cmd_buffer;
+		*cursor = '\0'; // start from empty line
 		cmd_prompt();
 
 		// read command line char by char
@@ -35,26 +35,32 @@ void cmd_main_loop(cmd_env_t *env)
 			if ((c = fgetc(stdin)) == EOF)
 				return;
 			
-			// backspace key support for terminal
-			if (c == '\x7F' && cursor > env->cmd_buffer)
+			// convert several special characters
+			if (c == '\t')
+				c = ' ';	// replace tabs with spaces
+			else if (c == '\x1B')
+				c = '^';	// display escape sequences
+			else if (c == '\x7F')
 			{
-				cursor --;
-				putc('\x7F', stdout);
+				// backspace key support for terminal
+				if (cursor > env->cmd_buffer)
+				{
+					cursor --;
+					#if CMD_ECHO_INPUT == 1
+					putc('\x7F', stdout);
+					#endif
+				}
 				continue;
 			}
 
-			// remove several special characters
-			if (c == '\r' || c == '\t')
-				continue;
-
-			#if CMD_ECHO_INPUT == 1
-			putc(c, stdout);
-			#endif
-
-			if (c == '\n')
+			if (c == CMD_ENTER_KEY)
 			{
 				// terminate last command
 				*cursor = '\0';
+
+				#if CMD_ECHO_INPUT == 1
+				printf(CMD_ENDL);
+				#endif
 
 				uint_fast8_t ntokens = cmd_tokenize(env->cmd_buffer, CMD_COMMAND_DEL, true,
 					tokens, sizeof(tokens) / sizeof(tokens[0]));
@@ -62,7 +68,7 @@ void cmd_main_loop(cmd_env_t *env)
 				// run command handler
 				for (uint_fast8_t i = 0; i < ntokens; i ++)
 				{
-					//printf("cmd%d=[%s]\n", i, tokens[i]);
+					//printf("cmd%d=[%s] CMD_ENDL", i, tokens[i]);
 					cmd_process_command(tokens[i], env);
 				}
 
@@ -72,6 +78,10 @@ void cmd_main_loop(cmd_env_t *env)
 			else if (cursor - env->cmd_buffer < CMD_MAX_LINE_LENGTH)
 			{
 				*cursor++ = c;
+
+				#if CMD_ECHO_INPUT == 1
+				putc(c, stdout);
+				#endif
 			}
 		}
 	}
@@ -87,7 +97,7 @@ void cmd_process_command(char *command, cmd_env_t *env)
 
 	/*for (uint_fast8_t i = 0; i < ntokens; i ++)
 	{
-		printf("   arg%d=[%s]\n", i, tokens[i]);
+		printf("   arg%d=[%s]" CMD_ENDL, i, tokens[i]);
 	}*/
 
 	if (ntokens > 0)
@@ -139,7 +149,7 @@ void cmd_process_command(char *command, cmd_env_t *env)
 				{
 					env->resp.status = cmd_arg_convert(
 						tokens[t], 
-						cmd_array[cmd_num].arg_types[t-1], 
+						(cmd_arg_type_t)cmd_array[cmd_num].arg_types[t-1], 
 						&(env->arg_buffer[t])
 					);
 					if (env->resp.status != CMD_STATUS_OK)
@@ -170,25 +180,25 @@ static void cmd_response_handler(uint8_t argc, char *raw_argv[], cmd_response_t 
 		case CMD_STATUS_ARG_TOO_MANY:
 		case CMD_STATUS_ARG_TOO_FEW:
 			// param is closest valid number of arguments
-			printf(": required %u but passed %u)\n", resp->param, argc-1);
+			printf(": required %u but passed %u)" CMD_ENDL, resp->param, argc-1);
 			break;
 		case CMD_STATUS_ARG_FORMAT:
 		case CMD_STATUS_ARG_INVALID:
 		case CMD_STATUS_ARG_TOO_HIGH:
 		case CMD_STATUS_ARG_TOO_LOW:
 			// param is number of invalid argument
-			printf(": %s)\n", raw_argv[resp->param]);
+			printf(": %s)" CMD_ENDL, raw_argv[resp->param]);
 			break;
 		case CMD_STATUS_OK:
 		case CMD_STATUS_UNKNOWN_CMD:
-			printf(")\n");
+			printf(")" CMD_ENDL);
 			break;
 		case CMD_STATUS_PROFILE_ERROR:
 		default:
 			if (resp->msg)
-				printf(": %s)\n", resp->msg);
+				printf(": %s)" CMD_ENDL, resp->msg);
 			else
-				printf(")\n");
+				printf(")" CMD_ENDL);
 			break;
 	}
 }

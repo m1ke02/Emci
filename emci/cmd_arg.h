@@ -26,6 +26,8 @@ typedef struct
 	};
 } cmd_arg_t;
 
+#define CMD_ARG(ch) ((cmd_arg_type_t)(ch)) // removes "enumerated type mixed with another type" warning
+
 const char *cmd_arg_type_message(cmd_arg_type_t type);
 cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v);
 uint32_t cmd_arg_print(const cmd_arg_t *v);

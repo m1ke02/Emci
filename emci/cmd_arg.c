@@ -37,9 +37,9 @@ cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v)
 			if (status != CMD_STATUS_OK) return status;
 			break;
 		case CMD_ARG_BOOL:
-			if (strcmpi(s, "true") == 0 || strcmpi(s, "1") == 0)
+			if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0)
 				v->b = true;
-			else if (strcmpi(s, "false") == 0 || strcmpi(s, "0") == 0)
+			else if (strcmp(s, "false") == 0 || strcmp(s, "0") == 0)
 				v->b = false;
 			else
 				return CMD_STATUS_ARG_FORMAT;

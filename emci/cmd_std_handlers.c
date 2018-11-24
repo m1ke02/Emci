@@ -17,7 +17,7 @@ cmd_status_t cmd_printargs_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env
 	{
 		printf(" P%02d=", i);
 		cmd_arg_print(&(argv[i]));
-		printf("\n");
+		printf(CMD_ENDL);
 	}
 
 	return CMD_STATUS_OK;
@@ -42,7 +42,7 @@ cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 	else
 	{
 		// list all commands
-		printf("%"CMD_MAX_NAME_LENGTH"s%s\n\n", "", " List of supported commands:");
+		printf("%"CMD_MAX_NAME_LENGTH"s%s" CMD_ENDL CMD_ENDL, "", " List of supported commands:");
 		for (i = 0; i < cmd_array_length; i ++)
 			cmd_help_handler0(i);
 	}
@@ -61,18 +61,18 @@ static void cmd_help_handler0(uint_fast8_t i)
 	// list all args
 	while (*atp)
 	{
-		printf((req > 0)? " %s:%s": " [%s:%s]", adp, cmd_arg_type_message(*atp));
+		printf((req > 0)? " %s:%s": " [%s:%s]", adp, cmd_arg_type_message((cmd_arg_type_t)*atp));
 		adp += strlen(adp)+1;
 		atp ++;
 		req --;
 	}
-	printf("\n %"CMD_MAX_NAME_LENGTH"s%s\n\n", "", cmd_array[i].cmd_dscr);
+	printf(CMD_ENDL " %"CMD_MAX_NAME_LENGTH"s%s" CMD_ENDL CMD_ENDL, "", cmd_array[i].cmd_dscr);
 }
 
 cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 {
 	cmd_var_handler_data_t *e = (cmd_var_handler_data_t *)env->cmd->extra;
-	cmd_arg_type_t type = env->cmd->arg_types[0];
+	cmd_arg_type_t type = (cmd_arg_type_t)env->cmd->arg_types[0];
 	bool cmp = false;
 
 	// profile consistency check
@@ -124,13 +124,13 @@ cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 	}
 	else /*if (argc == 1)*/
 	{
-		char fmt[] = "%.0f\n";
+		char fmt[] = "%.0f" CMD_ENDL;
 		// display current value
 		switch (type)
 		{
 			default:
-			case CMD_ARG_UINT32: printf("%u\n", *((uint32_t *)e->var)); break;
-			case CMD_ARG_INT32: printf("%d\n", *((int32_t *)e->var)); break;
+			case CMD_ARG_UINT32: printf("%u" CMD_ENDL, *((uint32_t *)e->var)); break;
+			case CMD_ARG_INT32: printf("%d" CMD_ENDL, *((int32_t *)e->var)); break;
 			case CMD_ARG_FLOAT:
 				fmt[2] = '0' + ((e->prec <= 9)? e->prec: 9);
 				printf(fmt, *((float *)e->var));

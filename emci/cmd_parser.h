@@ -3,12 +3,6 @@
 
 #include "cmd_arg.h"
 
-#define CMD_ECHO_INPUT			0
-#define CMD_MAX_LINE_LENGTH		32
-#define CMD_MAX_COMMANDS		8
-#define CMD_MAX_ARGS			10		// see "if (!adp)" line inside cmd_help_handler()
-#define CMD_MAX_NAME_LENGTH		"10"	// note the quotes
-
 typedef struct cmd_response_tag
 {
 	cmd_status_t status;

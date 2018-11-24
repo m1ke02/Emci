@@ -1,4 +1,4 @@
-#include "cmd_profile.h"
+#include "emci_profile.h"
 #include "emci/cmd_std_handlers.h"
 #include <stdio.h>
 
@@ -12,11 +12,11 @@ const cmd_command_t cmd_array[] =
 	"Display version information", "<strA>\0strB\0<strC>\0strD"},
 
 	{"setpoint", cmd_var_handler, "u", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_setpoint, .min={'u', {.u=100}}, .max={'u',{.u=200}}},
+	&(cmd_var_handler_data_t){.var=&cmd_var_setpoint, .min={CMD_ARG('u'), {.u=100}}, .max={CMD_ARG('u'),{.u=200}}},
 	"Display/change setpoint value", "value"},
 
 	{"fff", cmd_var_handler, "f", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_fff, .min={'f', {.f=.1}}, .max={'f',{.f=.9}}, .prec=4},
+	&(cmd_var_handler_data_t){.var=&cmd_var_fff, .min={CMD_ARG('f'), {.f=.1}}, .max={CMD_ARG('f'), {.f=.9}}, .prec=4},
 	"Display/change fff value", "value"},
 
 	{"test", test_handler, "i", 0,
@@ -34,7 +34,7 @@ const cmd_command_t cmd_array[] =
 
 const uint_fast8_t cmd_array_length = (sizeof(cmd_array) / sizeof(cmd_command_t));
 
-void cmd_prompt()
+void cmd_prompt(void)
 {
 	printf("emci[%u]>", cmd_var_setpoint);
 }
@@ -43,7 +43,7 @@ cmd_status_t about_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 {
 	printf("Test Device v1.0.0\r\n");
 	env->resp.msg = "Frequency cannot be measured";
-	return APP_FREQ_ERROR;
+	return (cmd_status_t)APP_FREQ_ERROR;
 }
 
 cmd_status_t test_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
