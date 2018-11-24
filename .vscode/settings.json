@@ -5,5 +5,8 @@
         "math.h": "c",
         "cmd_arg.h": "c",
         "cmd_common.h": "c"
-    }
+    },
+    "editor.smoothScrolling": true,
+    "editor.glyphMargin": false,
+    "workbench.editor.tabSizing": "shrink"
 }

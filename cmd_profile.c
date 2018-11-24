@@ -1,5 +1,5 @@
 #include "cmd_profile.h"
-#include "cmd_std_handlers.h"
+#include "emci/cmd_std_handlers.h"
 #include <stdio.h>
 
 uint32_t cmd_var_setpoint = 200;
@@ -7,7 +7,7 @@ float cmd_var_fff = 123.4;
 
 const cmd_command_t cmd_array[] =
 {
-	{"about", about_handler, "", 4,
+	{"about", about_handler, "", 0,
 	NULL,
 	"Display version information", "<strA>\0strB\0<strC>\0strD"},
 

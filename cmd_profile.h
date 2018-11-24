@@ -1,10 +1,7 @@
 #ifndef CMD_PROFILE_H
 #define CMD_PROFILE_H
 
-#include "cmd_parser.h"
-
-// custom printf function
-#define cmd_printf(...) printf(__VA_ARGS__)
+#include "emci/cmd_parser.h"
 
 typedef enum
 {

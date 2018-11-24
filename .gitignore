@@ -1,2 +1,4 @@
 # Ignore executables
 *.exe
+# Ignore VSCode data
+.vscode

@@ -1,5 +1,5 @@
 #include "cmd_parser.h"
-#include "cmd_profile.h"
+//#include "../cmd_profile.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,17 +7,15 @@
 #include <errno.h>
 #include <math.h>
 
-#define CMD_COMMAND_DEL ';'
-#define CMD_ARG_DEL ' '
-
-//	external app-dependent functions defined in cmd_profile.c
+//	external application-dependent functions
 void cmd_prompt();
 const char *cmd_app_status_message(cmd_status_t status);
 
-static void cmd_response_handler(uint8_t argc, char *raw_argv[], cmd_response_t *resp);
-
+//	external application-dependent variables
 extern const cmd_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
+
+static void cmd_response_handler(uint8_t argc, char *raw_argv[], cmd_response_t *resp);
 
 void cmd_main_loop(cmd_env_t *env)
 {
