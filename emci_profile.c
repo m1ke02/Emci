@@ -46,7 +46,7 @@ void cmd_prompt(void)
 
 cmd_status_t about_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 {
-	printf("Test Device v1.0.0\r\n");
+	printf("Test Device v1.0.0" CMD_ENDL);
 	env->resp.msg = "Frequency cannot be measured";
 	return (cmd_status_t)APP_FREQ_ERROR;
 }
@@ -64,7 +64,7 @@ cmd_status_t test_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 		return CMD_STATUS_ARG_TOO_LOW;
 	}
 
-	printf("test_handler: %d\r\n", argv[1].i);
+	printf("test_handler: %d" CMD_ENDL, argv[1].i);
 	return CMD_STATUS_OK;
 }
 

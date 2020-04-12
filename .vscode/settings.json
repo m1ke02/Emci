@@ -5,7 +5,8 @@
         "math.h": "c",
         "cmd_arg.h": "c",
         "cmd_common.h": "c",
-        "emci_profile.h": "c"
+        "emci_profile.h": "c",
+        "cmd_std_handlers.h": "c"
     },
     "editor.smoothScrolling": true,
     "editor.glyphMargin": false,
