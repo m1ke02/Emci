@@ -11,7 +11,7 @@ cmd_status_t cmd_printargs_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env
 {
 	if (argc <= 1)
 	{
-		printf(" No arguments\n");
+		printf(" No arguments" CMD_ENDL);
 	}
 	else for (uint32_t i = 1; i < argc; i ++)
 	{

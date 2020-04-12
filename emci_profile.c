@@ -4,6 +4,7 @@
 
 uint32_t cmd_var_setpoint = 200;
 float cmd_var_fff = 123.4;
+float cmd_var_delay = 888.8;
 
 const cmd_command_t cmd_array[] =
 {
@@ -14,6 +15,10 @@ const cmd_command_t cmd_array[] =
 	{"setpoint", cmd_var_handler, "u", 1,
 	&(cmd_var_handler_data_t){.var=&cmd_var_setpoint, .min={CMD_ARG('u'), {.u=100}}, .max={CMD_ARG('u'),{.u=200}}},
 	"Display/change setpoint value", "value"},
+
+	{"delay", cmd_var_handler, "f", 1,
+	&(cmd_var_handler_data_t){.var=&cmd_var_delay, .min={CMD_ARG('f'), {.f=0.0}}, .max={CMD_ARG('f'), {.f=60.0}}, .prec=1},
+	"Display/change delay", "delay[ms]"},
 
 	{"fff", cmd_var_handler, "f", 1,
 	&(cmd_var_handler_data_t){.var=&cmd_var_fff, .min={CMD_ARG('f'), {.f=.1}}, .max={CMD_ARG('f'), {.f=.9}}, .prec=4},
