@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "emci/cmd_parser.h"
+#include "cmd_parser.h"
 
 static cmd_env_t env;
 

@@ -1,5 +1,5 @@
 #include "emci_profile.h"
-#include "emci/cmd_std_handlers.h"
+#include "cmd_std_handlers.h"
 #include <stdio.h>
 
 uint32_t cmd_var_setpoint = 200;

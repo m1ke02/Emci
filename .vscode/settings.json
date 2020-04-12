@@ -4,7 +4,8 @@
         "cmd_profile.h": "c",
         "math.h": "c",
         "cmd_arg.h": "c",
-        "cmd_common.h": "c"
+        "cmd_common.h": "c",
+        "emci_profile.h": "c"
     },
     "editor.smoothScrolling": true,
     "editor.glyphMargin": false,
