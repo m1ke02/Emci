@@ -1,7 +1,7 @@
 #ifndef CMD_PROFILE_H
 #define CMD_PROFILE_H
 
-#include "cmd_parser.h"
+#include "emci_parser.h"
 
 typedef enum
 {

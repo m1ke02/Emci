@@ -1,7 +1,7 @@
-#ifndef CMD_PARSER_H
-#define CMD_PARSER_H
+#ifndef EMCI_PARSER_H
+#define EMCI_PARSER_H
 
-#include "cmd_arg.h"
+#include "emci_arg.h"
 
 typedef struct cmd_response_tag
 {

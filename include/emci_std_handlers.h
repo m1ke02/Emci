@@ -1,7 +1,7 @@
-#ifndef CMD_STD_HANDLERS_H
-#define CMD_STD_HANDLERS_H
+#ifndef EMCI_STD_HANDLERS_H
+#define EMCI_STD_HANDLERS_H
 
-#include "cmd_parser.h"
+#include "emci_parser.h"
 
 typedef struct
 {

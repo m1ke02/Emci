@@ -1,5 +1,5 @@
-#ifndef CMD_ARG_H
-#define CMD_ARG_H
+#ifndef EMCI_ARG_H
+#define EMCI_ARG_H
 
 #include "emci_config.h"
 #include <stdint.h>

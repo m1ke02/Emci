@@ -1,5 +1,5 @@
-#include "cmd_arg.h"
-#include "cmd_parser.h"
+#include "emci_arg.h"
+#include "emci_parser.h"
 #include <stdio.h>
 #include <string.h>
 

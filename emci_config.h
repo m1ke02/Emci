@@ -1,5 +1,5 @@
-#ifndef CMD_CONFIG_H
-#define CMD_CONFIG_H
+#ifndef EMCI_CONFIG_H
+#define EMCI_CONFIG_H
 
 #define CMD_COMMAND_DEL			';'
 #define CMD_ARG_DEL				' '
