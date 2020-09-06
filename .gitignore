@@ -1,4 +1,4 @@
 # Ignore executables
 *.exe
-# Ignore VSCode data
-.vscode
+# Ignore build artifacts
+build
