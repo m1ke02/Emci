@@ -18,7 +18,7 @@ typedef enum
 	EMCI_STATUS_ARG_TOO_HIGH = 8,
 	EMCI_STATUS_APP_ERROR_START = 32,
 	EMCI_STATUS_APP_ERROR_END = 255
-} cmd_status_t;
+} emci_status_t;
 
 typedef enum
 {
@@ -28,11 +28,11 @@ typedef enum
 	EMCI_ARG_FLOAT = 'f',
 	EMCI_ARG_BOOL = 'b',
 	EMCI_ARG_STRING = 's'
-} cmd_arg_type_t;
+} emci_arg_type_t;
 
 typedef struct
 {
-	cmd_arg_type_t type;
+	emci_arg_type_t type;
 	union
 	{
 		uint32_t u;
@@ -41,12 +41,12 @@ typedef struct
 		bool b;
 		char *s;
 	};
-} cmd_arg_t;
+} emci_arg_t;
 
-#define EMCI_ARG(ch) ((cmd_arg_type_t)(ch)) // removes "enumerated type mixed with another type" warning
+#define EMCI_ARG(ch) ((emci_arg_type_t)(ch)) // removes "enumerated type mixed with another type" warning
 
-const char *cmd_arg_type_message(cmd_arg_type_t type);
-cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v);
-uint32_t cmd_arg_print(const cmd_arg_t *v);
+const char *emci_arg_type_message(emci_arg_type_t type);
+emci_status_t emci_arg_convert(const char *s, emci_arg_type_t type, emci_arg_t *v);
+uint32_t emci_arg_print(const emci_arg_t *v);
 
 #endif

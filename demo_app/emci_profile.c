@@ -6,52 +6,52 @@ uint32_t cmd_var_setpoint = 200;
 float cmd_var_fff = 123.4;
 float cmd_var_delay = 888.8;
 
-const cmd_command_t cmd_array[] =
+const emci_command_t cmd_array[] =
 {
 	{"about", about_handler, "", 0,
 	NULL,
 	"Display version information", "<strA>\0strB\0<strC>\0strD"},
 
-	{"setpoint", cmd_var_handler, "u", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_setpoint, .min={EMCI_ARG('u'), {.u=100}}, .max={EMCI_ARG('u'),{.u=200}}},
+	{"setpoint", emci_var_handler, "u", 1,
+	&(emci_var_handler_data_t){.var=&cmd_var_setpoint, .min={EMCI_ARG('u'), {.u=100}}, .max={EMCI_ARG('u'),{.u=200}}},
 	"Display/change setpoint value", "value"},
 
-	{"delay", cmd_var_handler, "f", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_delay, .min={EMCI_ARG('f'), {.f=0.0}}, .max={EMCI_ARG('f'), {.f=60.0}}, .prec=1},
+	{"delay", emci_var_handler, "f", 1,
+	&(emci_var_handler_data_t){.var=&cmd_var_delay, .min={EMCI_ARG('f'), {.f=0.0}}, .max={EMCI_ARG('f'), {.f=60.0}}, .prec=1},
 	"Display/change delay", "delay[ms]"},
 
-	{"fff", cmd_var_handler, "f", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_fff, .min={EMCI_ARG('f'), {.f=.1}}, .max={EMCI_ARG('f'), {.f=.9}}, .prec=4},
+	{"fff", emci_var_handler, "f", 1,
+	&(emci_var_handler_data_t){.var=&cmd_var_fff, .min={EMCI_ARG('f'), {.f=.1}}, .max={EMCI_ARG('f'), {.f=.9}}, .prec=4},
 	"Display/change fff value", "value"},
 
 	{"test", test_handler, "i", 0,
 	NULL,
 	"Test the system", "p1"},
 
-	{"printargs", cmd_printargs_handler, "ssssssss", 8,
+	{"printargs", emci_printargs_handler, "ssssssss", 8,
 	NULL,
 	"Print all arguments passed", NULL},
 
-	{"help", cmd_help_handler, "s", 1,
+	{"help", emci_help_handler, "s", 1,
 	NULL,
 	"Display this message", "cmd"}
 };
 
-const uint_fast8_t cmd_array_length = (sizeof(cmd_array) / sizeof(cmd_command_t));
+const uint_fast8_t cmd_array_length = (sizeof(cmd_array) / sizeof(emci_command_t));
 
-void cmd_prompt(void)
+void emci_prompt(void)
 {
 	printf("emci[%u]>", cmd_var_setpoint);
 }
 
-cmd_status_t about_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
+emci_status_t about_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
 	printf("Test Device v1.0.0" EMCI_ENDL);
 	env->resp.msg = "Frequency cannot be measured";
-	return (cmd_status_t)APP_FREQ_ERROR;
+	return (emci_status_t)APP_FREQ_ERROR;
 }
 
-cmd_status_t test_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
+emci_status_t test_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
 	if (argv[1].i > 1000)
 	{
@@ -68,7 +68,7 @@ cmd_status_t test_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 	return EMCI_STATUS_OK;
 }
 
-const char *cmd_app_status_message(cmd_status_t status)
+const char *emci_app_status_message(emci_status_t status)
 {
 	switch ((app_status_t)status)
 	{

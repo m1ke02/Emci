@@ -7,16 +7,16 @@
 #include <math.h>
 
 //	external application-dependent functions
-void cmd_prompt(void);
-const char *cmd_app_status_message(cmd_status_t status);
+void emci_prompt(void);
+const char *emci_app_status_message(emci_status_t status);
 
 //	external application-dependent variables
-extern const cmd_command_t cmd_array[];
+extern const emci_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
 
-static void cmd_response_handler(uint8_t argc, char *raw_argv[], cmd_response_t *resp);
+static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_t *resp);
 
-void cmd_main_loop(cmd_env_t *env)
+void emci_main_loop(emci_env_t *env)
 {
 	int c;
 	char *cursor;
@@ -27,7 +27,7 @@ void cmd_main_loop(cmd_env_t *env)
 		// prepare to command line parsing
 		cursor = env->cmd_buffer;
 		*cursor = '\0'; // start from empty line
-		cmd_prompt();
+		emci_prompt();
 
 		// read command line char by char
 		while (1)
@@ -62,14 +62,14 @@ void cmd_main_loop(cmd_env_t *env)
 				printf(EMCI_ENDL);
 				#endif
 
-				uint_fast8_t ntokens = cmd_tokenize(env->cmd_buffer, EMCI_COMMAND_DEL, true,
+				uint_fast8_t ntokens = emci_tokenize(env->cmd_buffer, EMCI_COMMAND_DEL, true,
 					tokens, sizeof(tokens) / sizeof(tokens[0]));
 
 				// run command handler
 				for (uint_fast8_t i = 0; i < ntokens; i ++)
 				{
 					//printf("cmd%d=[%s] EMCI_ENDL", i, tokens[i]);
-					cmd_process_command(tokens[i], env);
+					emci_process_command(tokens[i], env);
 				}
 
 				// we are done, go to next line
@@ -87,12 +87,12 @@ void cmd_main_loop(cmd_env_t *env)
 	}
 }
 
-void cmd_process_command(char *command, cmd_env_t *env)
+void emci_process_command(char *command, emci_env_t *env)
 {
 	char *tokens[EMCI_MAX_ARGS+1]; // plus 1 for command name
 
 	// get tokens for command & args
-	uint_fast8_t ntokens = cmd_tokenize(command, EMCI_ARG_DEL, false,
+	uint_fast8_t ntokens = emci_tokenize(command, EMCI_ARG_DEL, false,
 		tokens, sizeof(tokens) / sizeof(tokens[0]));
 
 	/*for (uint_fast8_t i = 0; i < ntokens; i ++)
@@ -117,7 +117,7 @@ void cmd_process_command(char *command, cmd_env_t *env)
 		if (env->resp.status == EMCI_STATUS_OK)
 		{
 			// command found
-			env->cmd = (cmd_command_t *)&(cmd_array[cmd_num]);
+			env->cmd = (emci_command_t *)&(cmd_array[cmd_num]);
 			int_fast8_t nargs_max = strlen(cmd_array[cmd_num].arg_types);
 			int_fast8_t nargs_min = nargs_max - cmd_array[cmd_num].arg_optional;
 
@@ -143,13 +143,13 @@ void cmd_process_command(char *command, cmd_env_t *env)
 
 			if (env->resp.status == EMCI_STATUS_OK)
 			{
-				// convert name & args from strings to cmd_arg_t variants
-				cmd_arg_convert(tokens[0], EMCI_ARG_STRING, &(env->arg_buffer[0]));
+				// convert name & args from strings to emci_arg_t variants
+				emci_arg_convert(tokens[0], EMCI_ARG_STRING, &(env->arg_buffer[0]));
 				for (uint_fast8_t t = 1; t < ntokens; t ++)
 				{
-					env->resp.status = cmd_arg_convert(
+					env->resp.status = emci_arg_convert(
 						tokens[t],
-						(cmd_arg_type_t)cmd_array[cmd_num].arg_types[t-1],
+						(emci_arg_type_t)cmd_array[cmd_num].arg_types[t-1],
 						&(env->arg_buffer[t])
 					);
 					if (env->resp.status != EMCI_STATUS_OK)
@@ -167,13 +167,13 @@ void cmd_process_command(char *command, cmd_env_t *env)
 			}
 		}
 
-		cmd_response_handler(ntokens, tokens, &(env->resp));
+		emci_response_handler(ntokens, tokens, &(env->resp));
 	}
 }
 
-static void cmd_response_handler(uint8_t argc, char *raw_argv[], cmd_response_t *resp)
+static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_t *resp)
 {
-	printf("~%s %d (%s", raw_argv[0], resp->status, cmd_status_message(resp->status));
+	printf("~%s %d (%s", raw_argv[0], resp->status, emci_status_message(resp->status));
 
 	switch (resp->status)
 	{
@@ -203,7 +203,7 @@ static void cmd_response_handler(uint8_t argc, char *raw_argv[], cmd_response_t 
 	}
 }
 
-const char *cmd_status_message(cmd_status_t status)
+const char *emci_status_message(emci_status_t status)
 {
 	switch (status)
 	{
@@ -218,13 +218,13 @@ const char *cmd_status_message(cmd_status_t status)
 		case EMCI_STATUS_ARG_TOO_HIGH: return "Parameter value too high";
 		default:
 			if (status >= EMCI_STATUS_APP_ERROR_START && status <= EMCI_STATUS_APP_ERROR_END)
-				return cmd_app_status_message(status);
+				return emci_app_status_message(status);
 			else
 				return "?";
 	}
 }
 
-uint_fast8_t cmd_tokenize(char *buffer,
+uint_fast8_t emci_tokenize(char *buffer,
                           char del,
                           bool quotes,
                           char **tokens,
@@ -289,7 +289,7 @@ uint_fast8_t cmd_tokenize(char *buffer,
 	return token_ctr;
 }
 
-cmd_status_t cmd_strtoul2(const char *s, uint32_t *result, uint32_t radix)
+emci_status_t emci_strtoul2(const char *s, uint32_t *result, uint32_t radix)
 {
 	// skip whitespace
 	while (isspace(*s)) ++s;
@@ -308,7 +308,7 @@ cmd_status_t cmd_strtoul2(const char *s, uint32_t *result, uint32_t radix)
 		return EMCI_STATUS_OK;
 }
 
-cmd_status_t cmd_strtol2(const char *s, int32_t *result, uint32_t radix)
+emci_status_t emci_strtol2(const char *s, int32_t *result, uint32_t radix)
 {
 	const char* end = s;
 	errno = 0;
@@ -322,7 +322,7 @@ cmd_status_t cmd_strtol2(const char *s, int32_t *result, uint32_t radix)
 		return EMCI_STATUS_OK;
 }
 
-cmd_status_t cmd_strtof2(const char *s, float *result)
+emci_status_t emci_strtof2(const char *s, float *result)
 {
 	const char* end = s;
 	errno = 0;

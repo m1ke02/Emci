@@ -6,13 +6,13 @@
 typedef struct
 {
 	void *var;
-	cmd_arg_t min;
-	cmd_arg_t max;
+	emci_arg_t min;
+	emci_arg_t max;
 	uint8_t prec;
-} cmd_var_handler_data_t;
+} emci_var_handler_data_t;
 
-cmd_status_t cmd_printargs_handler	(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env);
-cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env);
-cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env);
+emci_status_t emci_printargs_handler	(uint8_t argc, emci_arg_t *argv, emci_env_t *env);
+emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env);
+emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env);
 
 #endif

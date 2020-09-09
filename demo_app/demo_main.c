@@ -4,10 +4,10 @@
 
 #include "emci_parser.h"
 
-static cmd_env_t env;
+static emci_env_t env;
 
 int main (int argc, char *argv[])
 {
 	printf("Emci started\n");
-	cmd_main_loop(&env);
+	emci_main_loop(&env);
 }

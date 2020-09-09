@@ -10,9 +10,9 @@ typedef enum
     APP_FREQ_ERROR
 } app_status_t;
 
-void cmd_prompt(void);
-cmd_status_t about_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env);
-cmd_status_t test_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env);
-const char *cmd_app_status_message(cmd_status_t status);
+void emci_prompt(void);
+emci_status_t about_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env);
+emci_status_t test_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env);
+const char *emci_app_status_message(emci_status_t status);
 
 #endif

@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include <string.h>
 
-static void cmd_help_handler0(uint_fast8_t i);
+static void emci_help_handler0(uint_fast8_t i);
 
-extern const cmd_command_t cmd_array[];
+extern const emci_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
 
-cmd_status_t cmd_printargs_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
+emci_status_t emci_printargs_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
 	if (argc <= 1)
 	{
@@ -16,14 +16,14 @@ cmd_status_t cmd_printargs_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env
 	else for (uint32_t i = 1; i < argc; i ++)
 	{
 		printf(" P%02d=", i);
-		cmd_arg_print(&(argv[i]));
+		emci_arg_print(&(argv[i]));
 		printf(EMCI_ENDL);
 	}
 
 	return EMCI_STATUS_OK;
 }
 
-cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
+emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
 	uint_fast8_t i;
 
@@ -33,7 +33,7 @@ cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 		for (i = 0; i < cmd_array_length; i ++)
 			if (strcmp(cmd_array[i].name, argv[1].s) == 0)
 			{
-				cmd_help_handler0(i);
+				emci_help_handler0(i);
 				return EMCI_STATUS_OK;
 			}
 		env->resp.param = 1;
@@ -44,13 +44,13 @@ cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 		// list all commands
 		printf("%"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", " List of supported commands:");
 		for (i = 0; i < cmd_array_length; i ++)
-			cmd_help_handler0(i);
+			emci_help_handler0(i);
 	}
 
 	return EMCI_STATUS_OK;
 }
 
-static void cmd_help_handler0(uint_fast8_t i)
+static void emci_help_handler0(uint_fast8_t i)
 {
 	printf("%"EMCI_MAX_NAME_LENGTH"s", cmd_array[i].name);
 	const char *atp = cmd_array[i].arg_types;
@@ -61,7 +61,7 @@ static void cmd_help_handler0(uint_fast8_t i)
 	// list all args
 	while (*atp)
 	{
-		printf((req > 0)? " %s:%s": " [%s:%s]", adp, cmd_arg_type_message((cmd_arg_type_t)*atp));
+		printf((req > 0)? " %s:%s": " [%s:%s]", adp, emci_arg_type_message((emci_arg_type_t)*atp));
 		adp += strlen(adp)+1;
 		atp ++;
 		req --;
@@ -69,10 +69,10 @@ static void cmd_help_handler0(uint_fast8_t i)
 	printf(EMCI_ENDL " %"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", cmd_array[i].cmd_dscr);
 }
 
-cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
+emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
-	cmd_var_handler_data_t *e = (cmd_var_handler_data_t *)env->cmd->extra;
-	cmd_arg_type_t type = (cmd_arg_type_t)env->cmd->arg_types[0];
+	emci_var_handler_data_t *e = (emci_var_handler_data_t *)env->cmd->extra;
+	emci_arg_type_t type = (emci_arg_type_t)env->cmd->arg_types[0];
 	bool cmp = false;
 
 	// profile consistency check

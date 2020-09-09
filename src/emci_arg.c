@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-const char *cmd_arg_type_message(cmd_arg_type_t type)
+const char *emci_arg_type_message(emci_arg_type_t type)
 {
 	switch (type)
 	{
@@ -17,23 +17,23 @@ const char *cmd_arg_type_message(cmd_arg_type_t type)
 	}
 }
 
-cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v)
+emci_status_t emci_arg_convert(const char *s, emci_arg_type_t type, emci_arg_t *v)
 {
-	cmd_status_t status;
+	emci_status_t status;
 
 	v->type = type;
 	switch (type)
 	{
 		case EMCI_ARG_UINT32:
-			status = cmd_strtoul2(s, &(v->u), 0);
+			status = emci_strtoul2(s, &(v->u), 0);
 			if (status != EMCI_STATUS_OK) return status;
 			break;
 		case EMCI_ARG_INT32:
-			status = cmd_strtol2(s, &(v->i), 0);
+			status = emci_strtol2(s, &(v->i), 0);
 			if (status != EMCI_STATUS_OK) return status;
 			break;
 		case EMCI_ARG_FLOAT:
-			status = cmd_strtof2(s, &(v->f));
+			status = emci_strtof2(s, &(v->f));
 			if (status != EMCI_STATUS_OK) return status;
 			break;
 		case EMCI_ARG_BOOL:
@@ -56,9 +56,9 @@ cmd_status_t cmd_arg_convert(const char *s, cmd_arg_type_t type, cmd_arg_t *v)
 	return EMCI_STATUS_OK;
 }
 
-uint32_t cmd_arg_print(const cmd_arg_t *v)
+uint32_t emci_arg_print(const emci_arg_t *v)
 {
-	const char *type = cmd_arg_type_message(v->type);
+	const char *type = emci_arg_type_message(v->type);
 
 	switch (v->type)
 	{
