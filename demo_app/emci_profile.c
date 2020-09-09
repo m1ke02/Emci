@@ -41,12 +41,12 @@ const uint_fast8_t cmd_array_length = (sizeof(cmd_array) / sizeof(emci_command_t
 
 void emci_prompt(void)
 {
-	printf("emci[%u]>", cmd_var_setpoint);
+	EMCI_PRINTF("emci[%u]>", cmd_var_setpoint);
 }
 
 emci_status_t about_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
-	printf("Test Device v1.0.0" EMCI_ENDL);
+	EMCI_PRINTF("Test Device v1.0.0" EMCI_ENDL);
 	env->resp.msg = "Frequency cannot be measured";
 	return (emci_status_t)APP_FREQ_ERROR;
 }
@@ -64,7 +64,7 @@ emci_status_t test_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 		return EMCI_STATUS_ARG_TOO_LOW;
 	}
 
-	printf("test_handler: %d" EMCI_ENDL, argv[1].i);
+	EMCI_PRINTF("test_handler: %d" EMCI_ENDL, argv[1].i);
 	return EMCI_STATUS_OK;
 }
 

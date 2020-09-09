@@ -63,18 +63,18 @@ uint32_t emci_arg_print(const emci_arg_t *v)
 	switch (v->type)
 	{
 		case EMCI_ARG_UINT32:
-			return printf("%s[%u]", type, v->u);
+			return EMCI_PRINTF("%s[%u]", type, v->u);
 		case EMCI_ARG_INT32:
-			return printf("%s[%d]", type, v->i);
+			return EMCI_PRINTF("%s[%d]", type, v->i);
 		case EMCI_ARG_FLOAT:
-			return printf("%s[%f]", type, v->f);
+			return EMCI_PRINTF("%s[%f]", type, v->f);
 		case EMCI_ARG_BOOL:
-			return printf(v->b? "%s[true]": "%s[false]", type);
+			return EMCI_PRINTF(v->b? "%s[true]": "%s[false]", type);
 		case EMCI_ARG_STRING:
-			return printf("%s[%s]", type, v->s);
+			return EMCI_PRINTF("%s[%s]", type, v->s);
 		case EMCI_ARG_VOID:
-			return printf("%s[]", type);
+			return EMCI_PRINTF("%s[]", type);
 		default:
-			return printf("%s", type);
+			return EMCI_PRINTF("%s", type);
 	}
 }

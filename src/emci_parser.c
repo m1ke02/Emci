@@ -32,8 +32,8 @@ void emci_main_loop(emci_env_t *env)
 		// read command line char by char
 		while (1)
 		{
-			if ((c = fgetc(stdin)) == EOF)
-				return;
+			EMCI_IDLE_TASK();
+			EMCI_GET_CHAR(c);
 
 			// convert several special characters
 			if (c == '\t')
@@ -47,7 +47,7 @@ void emci_main_loop(emci_env_t *env)
 				{
 					cursor --;
 					#if EMCI_ECHO_INPUT == 1
-					putc('\x7F', stdout);
+					EMCI_PUT_CHAR('\x7F');
 					#endif
 				}
 				continue;
@@ -59,7 +59,7 @@ void emci_main_loop(emci_env_t *env)
 				*cursor = '\0';
 
 				#if EMCI_ECHO_INPUT == 1
-				printf(EMCI_ENDL);
+				EMCI_PRINTF(EMCI_ENDL);
 				#endif
 
 				uint_fast8_t ntokens = emci_tokenize(env->cmd_buffer, EMCI_COMMAND_DEL, true,
@@ -68,7 +68,7 @@ void emci_main_loop(emci_env_t *env)
 				// run command handler
 				for (uint_fast8_t i = 0; i < ntokens; i ++)
 				{
-					//printf("cmd%d=[%s] EMCI_ENDL", i, tokens[i]);
+					//EMCI_PRINTF("cmd%d=[%s] EMCI_ENDL", i, tokens[i]);
 					emci_process_command(tokens[i], env);
 				}
 
@@ -80,7 +80,7 @@ void emci_main_loop(emci_env_t *env)
 				*cursor++ = c;
 
 				#if EMCI_ECHO_INPUT == 1
-				putc(c, stdout);
+				EMCI_PUT_CHAR(c);
 				#endif
 			}
 		}
@@ -97,7 +97,7 @@ void emci_process_command(char *command, emci_env_t *env)
 
 	/*for (uint_fast8_t i = 0; i < ntokens; i ++)
 	{
-		printf("   arg%d=[%s]" EMCI_ENDL, i, tokens[i]);
+		EMCI_PRINTF("   arg%d=[%s]" EMCI_ENDL, i, tokens[i]);
 	}*/
 
 	if (ntokens > 0)
@@ -173,32 +173,32 @@ void emci_process_command(char *command, emci_env_t *env)
 
 static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_t *resp)
 {
-	printf("~%s %d (%s", raw_argv[0], resp->status, emci_status_message(resp->status));
+	EMCI_PRINTF("~%s %d (%s", raw_argv[0], resp->status, emci_status_message(resp->status));
 
 	switch (resp->status)
 	{
 		case EMCI_STATUS_ARG_TOO_MANY:
 		case EMCI_STATUS_ARG_TOO_FEW:
 			// param is closest valid number of arguments
-			printf(": required %u but passed %u)" EMCI_ENDL, resp->param, argc-1);
+			EMCI_PRINTF(": required %u but passed %u)" EMCI_ENDL, resp->param, argc-1);
 			break;
 		case EMCI_STATUS_ARG_FORMAT:
 		case EMCI_STATUS_ARG_INVALID:
 		case EMCI_STATUS_ARG_TOO_HIGH:
 		case EMCI_STATUS_ARG_TOO_LOW:
 			// param is number of invalid argument
-			printf(": %s)" EMCI_ENDL, raw_argv[resp->param]);
+			EMCI_PRINTF(": %s)" EMCI_ENDL, raw_argv[resp->param]);
 			break;
 		case EMCI_STATUS_OK:
 		case EMCI_STATUS_UNKNOWN_CMD:
-			printf(")" EMCI_ENDL);
+			EMCI_PRINTF(")" EMCI_ENDL);
 			break;
 		case EMCI_STATUS_PROFILE_ERROR:
 		default:
 			if (resp->msg)
-				printf(": %s)" EMCI_ENDL, resp->msg);
+				EMCI_PRINTF(": %s)" EMCI_ENDL, resp->msg);
 			else
-				printf(")" EMCI_ENDL);
+				EMCI_PRINTF(")" EMCI_ENDL);
 			break;
 	}
 }

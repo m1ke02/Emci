@@ -8,6 +8,6 @@ static emci_env_t env;
 
 int main (int argc, char *argv[])
 {
-	printf("Emci started\n");
+	EMCI_PRINTF("Emci started\n");
 	emci_main_loop(&env);
 }

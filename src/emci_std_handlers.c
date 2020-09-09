@@ -11,13 +11,13 @@ emci_status_t emci_printargs_handler(uint8_t argc, emci_arg_t *argv, emci_env_t 
 {
 	if (argc <= 1)
 	{
-		printf(" No arguments" EMCI_ENDL);
+		EMCI_PRINTF(" No arguments" EMCI_ENDL);
 	}
 	else for (uint32_t i = 1; i < argc; i ++)
 	{
-		printf(" P%02d=", i);
+		EMCI_PRINTF(" P%02d=", i);
 		emci_arg_print(&(argv[i]));
-		printf(EMCI_ENDL);
+		EMCI_PRINTF(EMCI_ENDL);
 	}
 
 	return EMCI_STATUS_OK;
@@ -42,7 +42,7 @@ emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 	else
 	{
 		// list all commands
-		printf("%"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", " List of supported commands:");
+		EMCI_PRINTF("%"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", " List of supported commands:");
 		for (i = 0; i < cmd_array_length; i ++)
 			emci_help_handler0(i);
 	}
@@ -52,7 +52,7 @@ emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 
 static void emci_help_handler0(uint_fast8_t i)
 {
-	printf("%"EMCI_MAX_NAME_LENGTH"s", cmd_array[i].name);
+	EMCI_PRINTF("%"EMCI_MAX_NAME_LENGTH"s", cmd_array[i].name);
 	const char *atp = cmd_array[i].arg_types;
 	const char *adp = cmd_array[i].arg_dscr;
 	int_fast8_t req = strlen(atp) - cmd_array[i].arg_optional;
@@ -61,12 +61,12 @@ static void emci_help_handler0(uint_fast8_t i)
 	// list all args
 	while (*atp)
 	{
-		printf((req > 0)? " %s:%s": " [%s:%s]", adp, emci_arg_type_message((emci_arg_type_t)*atp));
+		EMCI_PRINTF((req > 0)? " %s:%s": " [%s:%s]", adp, emci_arg_type_message((emci_arg_type_t)*atp));
 		adp += strlen(adp)+1;
 		atp ++;
 		req --;
 	}
-	printf(EMCI_ENDL " %"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", cmd_array[i].cmd_dscr);
+	EMCI_PRINTF(EMCI_ENDL " %"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", cmd_array[i].cmd_dscr);
 }
 
 emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
@@ -129,11 +129,11 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 		switch (type)
 		{
 			default:
-			case EMCI_ARG_UINT32: printf("%u" EMCI_ENDL, *((uint32_t *)e->var)); break;
-			case EMCI_ARG_INT32: printf("%d" EMCI_ENDL, *((int32_t *)e->var)); break;
+			case EMCI_ARG_UINT32: EMCI_PRINTF("%u" EMCI_ENDL, *((uint32_t *)e->var)); break;
+			case EMCI_ARG_INT32: EMCI_PRINTF("%d" EMCI_ENDL, *((int32_t *)e->var)); break;
 			case EMCI_ARG_FLOAT:
 				fmt[2] = '0' + ((e->prec <= 9)? e->prec: 9);
-				printf(fmt, *((float *)e->var));
+				EMCI_PRINTF(fmt, *((float *)e->var));
 				break;
 		}
 		return EMCI_STATUS_OK;
