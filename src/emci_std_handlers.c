@@ -11,16 +11,16 @@ cmd_status_t cmd_printargs_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env
 {
 	if (argc <= 1)
 	{
-		printf(" No arguments" CMD_ENDL);
+		printf(" No arguments" EMCI_ENDL);
 	}
 	else for (uint32_t i = 1; i < argc; i ++)
 	{
 		printf(" P%02d=", i);
 		cmd_arg_print(&(argv[i]));
-		printf(CMD_ENDL);
+		printf(EMCI_ENDL);
 	}
 
-	return CMD_STATUS_OK;
+	return EMCI_STATUS_OK;
 }
 
 cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
@@ -34,29 +34,29 @@ cmd_status_t cmd_help_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 			if (strcmp(cmd_array[i].name, argv[1].s) == 0)
 			{
 				cmd_help_handler0(i);
-				return CMD_STATUS_OK;
+				return EMCI_STATUS_OK;
 			}
 		env->resp.param = 1;
-		return CMD_STATUS_ARG_INVALID;
+		return EMCI_STATUS_ARG_INVALID;
 	}
 	else
 	{
 		// list all commands
-		printf("%"CMD_MAX_NAME_LENGTH"s%s" CMD_ENDL CMD_ENDL, "", " List of supported commands:");
+		printf("%"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", " List of supported commands:");
 		for (i = 0; i < cmd_array_length; i ++)
 			cmd_help_handler0(i);
 	}
 
-	return CMD_STATUS_OK;
+	return EMCI_STATUS_OK;
 }
 
 static void cmd_help_handler0(uint_fast8_t i)
 {
-	printf("%"CMD_MAX_NAME_LENGTH"s", cmd_array[i].name);
+	printf("%"EMCI_MAX_NAME_LENGTH"s", cmd_array[i].name);
 	const char *atp = cmd_array[i].arg_types;
 	const char *adp = cmd_array[i].arg_dscr;
 	int_fast8_t req = strlen(atp) - cmd_array[i].arg_optional;
-	// use default names if not specified (only CMD_MAX_ARGS <= 8 supported!)
+	// use default names if not specified (only EMCI_MAX_ARGS <= 8 supported!)
 	if (!adp) adp = "p1\0p2\0p3\0p4\0p5\0p6\0p7\0p8\0";
 	// list all args
 	while (*atp)
@@ -66,7 +66,7 @@ static void cmd_help_handler0(uint_fast8_t i)
 		atp ++;
 		req --;
 	}
-	printf(CMD_ENDL " %"CMD_MAX_NAME_LENGTH"s%s" CMD_ENDL CMD_ENDL, "", cmd_array[i].cmd_dscr);
+	printf(EMCI_ENDL " %"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", cmd_array[i].cmd_dscr);
 }
 
 cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
@@ -77,8 +77,8 @@ cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 
 	// profile consistency check
 	if (e->var == NULL || e->max.type != type || e->min.type != type ||
-		strlen(env->cmd->arg_types) != 1 || type == CMD_ARG_STRING)
-		return CMD_STATUS_PROFILE_ERROR;
+		strlen(env->cmd->arg_types) != 1 || type == EMCI_ARG_STRING)
+		return EMCI_STATUS_PROFILE_ERROR;
 
 	if (argc == 2)
 	{
@@ -86,56 +86,56 @@ cmd_status_t cmd_var_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 		switch (type)
 		{
 			default:
-			case CMD_ARG_UINT32: cmp = (argv[1].u > e->max.u); break;
-			case CMD_ARG_INT32: cmp = (argv[1].i > e->max.i); break;
-			case CMD_ARG_FLOAT: cmp = (argv[1].f > e->max.f); break;
+			case EMCI_ARG_UINT32: cmp = (argv[1].u > e->max.u); break;
+			case EMCI_ARG_INT32: cmp = (argv[1].i > e->max.i); break;
+			case EMCI_ARG_FLOAT: cmp = (argv[1].f > e->max.f); break;
 		}
 
 		if (cmp)
 		{
 			env->resp.param = 1;
-			return CMD_STATUS_ARG_TOO_HIGH;
+			return EMCI_STATUS_ARG_TOO_HIGH;
 		}
 
 		// compare to min
 		switch (type)
 		{
 			default:
-			case CMD_ARG_UINT32: cmp = (argv[1].u < e->min.u); break;
-			case CMD_ARG_INT32: cmp = (argv[1].i < e->min.i); break;
-			case CMD_ARG_FLOAT: cmp = (argv[1].f < e->min.f); break;
+			case EMCI_ARG_UINT32: cmp = (argv[1].u < e->min.u); break;
+			case EMCI_ARG_INT32: cmp = (argv[1].i < e->min.i); break;
+			case EMCI_ARG_FLOAT: cmp = (argv[1].f < e->min.f); break;
 		}
 
 		if (cmp)
 		{
 			env->resp.param = 1;
-			return CMD_STATUS_ARG_TOO_LOW;
+			return EMCI_STATUS_ARG_TOO_LOW;
 		}
 
 		// assign new value
 		switch (type)
 		{
 			default:
-			case CMD_ARG_UINT32: *((uint32_t *)e->var) = argv[1].u; break;
-			case CMD_ARG_INT32: *((int32_t *)e->var) = argv[1].i; break;
-			case CMD_ARG_FLOAT: *((float *)e->var) = argv[1].f; break;
+			case EMCI_ARG_UINT32: *((uint32_t *)e->var) = argv[1].u; break;
+			case EMCI_ARG_INT32: *((int32_t *)e->var) = argv[1].i; break;
+			case EMCI_ARG_FLOAT: *((float *)e->var) = argv[1].f; break;
 		}
-		return CMD_STATUS_OK;
+		return EMCI_STATUS_OK;
 	}
 	else /*if (argc == 1)*/
 	{
-		char fmt[] = "%.0f" CMD_ENDL;
+		char fmt[] = "%.0f" EMCI_ENDL;
 		// display current value
 		switch (type)
 		{
 			default:
-			case CMD_ARG_UINT32: printf("%u" CMD_ENDL, *((uint32_t *)e->var)); break;
-			case CMD_ARG_INT32: printf("%d" CMD_ENDL, *((int32_t *)e->var)); break;
-			case CMD_ARG_FLOAT:
+			case EMCI_ARG_UINT32: printf("%u" EMCI_ENDL, *((uint32_t *)e->var)); break;
+			case EMCI_ARG_INT32: printf("%d" EMCI_ENDL, *((int32_t *)e->var)); break;
+			case EMCI_ARG_FLOAT:
 				fmt[2] = '0' + ((e->prec <= 9)? e->prec: 9);
 				printf(fmt, *((float *)e->var));
 				break;
 		}
-		return CMD_STATUS_OK;
+		return EMCI_STATUS_OK;
 	}
 }

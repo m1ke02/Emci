@@ -25,8 +25,8 @@ typedef struct cmd_command_tag
 
 typedef struct cmd_env_tag
 {
-	char cmd_buffer[CMD_MAX_LINE_LENGTH+1]; // plus 1 for '\0'
-	cmd_arg_t arg_buffer[CMD_MAX_ARGS+1]; // plus 1 for command name
+	char cmd_buffer[EMCI_MAX_LINE_LENGTH+1]; // plus 1 for '\0'
+	cmd_arg_t arg_buffer[EMCI_MAX_ARGS+1]; // plus 1 for command name
 	cmd_command_t *cmd;
 	cmd_response_t resp;
 } cmd_env_t;

@@ -13,15 +13,15 @@ const cmd_command_t cmd_array[] =
 	"Display version information", "<strA>\0strB\0<strC>\0strD"},
 
 	{"setpoint", cmd_var_handler, "u", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_setpoint, .min={CMD_ARG('u'), {.u=100}}, .max={CMD_ARG('u'),{.u=200}}},
+	&(cmd_var_handler_data_t){.var=&cmd_var_setpoint, .min={EMCI_ARG('u'), {.u=100}}, .max={EMCI_ARG('u'),{.u=200}}},
 	"Display/change setpoint value", "value"},
 
 	{"delay", cmd_var_handler, "f", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_delay, .min={CMD_ARG('f'), {.f=0.0}}, .max={CMD_ARG('f'), {.f=60.0}}, .prec=1},
+	&(cmd_var_handler_data_t){.var=&cmd_var_delay, .min={EMCI_ARG('f'), {.f=0.0}}, .max={EMCI_ARG('f'), {.f=60.0}}, .prec=1},
 	"Display/change delay", "delay[ms]"},
 
 	{"fff", cmd_var_handler, "f", 1,
-	&(cmd_var_handler_data_t){.var=&cmd_var_fff, .min={CMD_ARG('f'), {.f=.1}}, .max={CMD_ARG('f'), {.f=.9}}, .prec=4},
+	&(cmd_var_handler_data_t){.var=&cmd_var_fff, .min={EMCI_ARG('f'), {.f=.1}}, .max={EMCI_ARG('f'), {.f=.9}}, .prec=4},
 	"Display/change fff value", "value"},
 
 	{"test", test_handler, "i", 0,
@@ -46,7 +46,7 @@ void cmd_prompt(void)
 
 cmd_status_t about_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 {
-	printf("Test Device v1.0.0" CMD_ENDL);
+	printf("Test Device v1.0.0" EMCI_ENDL);
 	env->resp.msg = "Frequency cannot be measured";
 	return (cmd_status_t)APP_FREQ_ERROR;
 }
@@ -56,16 +56,16 @@ cmd_status_t test_handler(uint8_t argc, cmd_arg_t *argv, cmd_env_t *env)
 	if (argv[1].i > 1000)
 	{
 		env->resp.param = 1;
-		return CMD_STATUS_ARG_TOO_HIGH;
+		return EMCI_STATUS_ARG_TOO_HIGH;
 	}
 	else if (argv[1].i < 500)
 	{
 		env->resp.param = 1;
-		return CMD_STATUS_ARG_TOO_LOW;
+		return EMCI_STATUS_ARG_TOO_LOW;
 	}
 
-	printf("test_handler: %d" CMD_ENDL, argv[1].i);
-	return CMD_STATUS_OK;
+	printf("test_handler: %d" EMCI_ENDL, argv[1].i);
+	return EMCI_STATUS_OK;
 }
 
 const char *cmd_app_status_message(cmd_status_t status)

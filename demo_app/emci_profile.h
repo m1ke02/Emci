@@ -1,12 +1,12 @@
-#ifndef CMD_PROFILE_H
-#define CMD_PROFILE_H
+#ifndef EMCI_PROFILE_H
+#define EMCI_PROFILE_H
 
 #include "emci_parser.h"
 
 typedef enum
 {
-    APP_OK = CMD_STATUS_OK,
-    APP_IO_ERROR = CMD_STATUS_APP_ERROR_START,
+    APP_OK = EMCI_STATUS_OK,
+    APP_IO_ERROR = EMCI_STATUS_APP_ERROR_START,
     APP_FREQ_ERROR
 } app_status_t;
 
