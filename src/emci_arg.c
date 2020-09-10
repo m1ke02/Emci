@@ -56,25 +56,18 @@ emci_status_t emci_arg_convert(const char *s, emci_arg_type_t type, emci_arg_t *
 	return EMCI_STATUS_OK;
 }
 
-uint32_t emci_arg_print(const emci_arg_t *v)
+void emci_arg_print(const emci_arg_t *v)
 {
 	const char *type = emci_arg_type_message(v->type);
 
 	switch (v->type)
 	{
-		case EMCI_ARG_UINT32:
-			return EMCI_PRINTF("%s[%u]", type, v->u);
-		case EMCI_ARG_INT32:
-			return EMCI_PRINTF("%s[%d]", type, v->i);
-		case EMCI_ARG_FLOAT:
-			return EMCI_PRINTF("%s[%f]", type, v->f);
-		case EMCI_ARG_BOOL:
-			return EMCI_PRINTF(v->b? "%s[true]": "%s[false]", type);
-		case EMCI_ARG_STRING:
-			return EMCI_PRINTF("%s[%s]", type, v->s);
-		case EMCI_ARG_VOID:
-			return EMCI_PRINTF("%s[]", type);
-		default:
-			return EMCI_PRINTF("%s", type);
+		case EMCI_ARG_UINT32: EMCI_PRINTF("%s[%u]", type, v->u); break;
+		case EMCI_ARG_INT32:  EMCI_PRINTF("%s[%d]", type, v->i); break;
+		case EMCI_ARG_FLOAT:  EMCI_PRINTF("%s[%f]", type, v->f); break;
+		case EMCI_ARG_BOOL:   EMCI_PRINTF(v->b? "%s[true]": "%s[false]", type); break;
+		case EMCI_ARG_STRING: EMCI_PRINTF("%s[%s]", type, v->s); break;
+		case EMCI_ARG_VOID:   EMCI_PRINTF("%s[]", type); break;
+		default:              EMCI_PRINTF("%s", type); break;
 	}
 }

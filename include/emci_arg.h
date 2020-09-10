@@ -47,6 +47,6 @@ typedef struct
 
 const char *emci_arg_type_message(emci_arg_type_t type);
 emci_status_t emci_arg_convert(const char *s, emci_arg_type_t type, emci_arg_t *v);
-uint32_t emci_arg_print(const emci_arg_t *v);
+void emci_arg_print(const emci_arg_t *v);
 
 #endif
