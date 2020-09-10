@@ -196,9 +196,13 @@ static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_
         case EMCI_STATUS_PROFILE_ERROR:
         default:
             if (resp->msg)
+            {
                 EMCI_PRINTF(": %s)" EMCI_ENDL, resp->msg);
+            }
             else
+            {
                 EMCI_PRINTF(")" EMCI_ENDL);
+            }
             break;
     }
 }
@@ -292,7 +296,7 @@ uint_fast8_t emci_tokenize(char *buffer,
 emci_status_t emci_strtoul2(const char *s, uint32_t *result, uint32_t radix)
 {
     // skip whitespace
-    while (isspace(*s)) ++s;
+    while (isspace((unsigned char)(*s))) ++s;
 
     const char* end = s;
     errno = 0;
