@@ -194,6 +194,7 @@ static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_
             EMCI_PRINTF(")" EMCI_ENDL);
             break;
         case EMCI_STATUS_PROFILE_ERROR:
+        case EMCI_STATUS_NOT_SUPPORTED:
         default:
             if (resp->msg)
             {
@@ -214,6 +215,7 @@ const char *emci_status_message(emci_status_t status)
         case EMCI_STATUS_OK: return "OK";
         case EMCI_STATUS_UNKNOWN_CMD: return "Unknown command";
         case EMCI_STATUS_PROFILE_ERROR: return "Profile error";
+        case EMCI_STATUS_NOT_SUPPORTED: return "Not supported";
         case EMCI_STATUS_ARG_TOO_MANY: return "Too many arguments";
         case EMCI_STATUS_ARG_TOO_FEW: return "Too few arguments";
         case EMCI_STATUS_ARG_FORMAT: return "Incorrect argument format";

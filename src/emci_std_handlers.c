@@ -72,18 +72,37 @@ static void emci_help_handler0(uint_fast8_t i)
 emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
     emci_var_handler_data_t *e = (emci_var_handler_data_t *)env->cmd->extra;
-    emci_arg_type_t type = (emci_arg_type_t)env->cmd->arg_types[0];
+    emci_arg_type_t type;
     bool cmp = false;
 
-    // profile consistency check
-    if (e->var == NULL || e->max.type != type || e->min.type != type ||
-        strlen(env->cmd->arg_types) != 1 || type == EMCI_ARG_STRING)
+    // general profile consistency check
+    if (e->var == NULL)
         return EMCI_STATUS_PROFILE_ERROR;
+
+    if (strlen(env->cmd->arg_types) == 1)
+    {
+        // argument list contains 1 item for writeable variable (argc == 1 or 2)
+        type = (emci_arg_type_t)env->cmd->arg_types[0];
+        if (type == EMCI_ARG_STRING)
+            return EMCI_STATUS_NOT_SUPPORTED;
+        if (e->max.type != type || e->min.type != type)
+            return EMCI_STATUS_PROFILE_ERROR;
+    }
+    else if (strlen(env->cmd->arg_types) == 0)
+    {
+        // argument list contains no items for readonly variable (argc == 1)
+        type = e->min.type;
+        if (e->max.type != type)
+            return EMCI_STATUS_PROFILE_ERROR;
+    }
+    else
+    {
+        return EMCI_STATUS_PROFILE_ERROR;
+    }
 
     if (argc == 2)
     {
-        // compare to max
-        switch (type)
+        switch (type)   // compare to max
         {
             default:
             case EMCI_ARG_UINT32: cmp = (argv[1].u > e->max.u); break;
@@ -97,8 +116,7 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
             return EMCI_STATUS_ARG_TOO_HIGH;
         }
 
-        // compare to min
-        switch (type)
+        switch (type)   // compare to min
         {
             default:
             case EMCI_ARG_UINT32: cmp = (argv[1].u < e->min.u); break;
@@ -112,8 +130,7 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
             return EMCI_STATUS_ARG_TOO_LOW;
         }
 
-        // assign new value
-        switch (type)
+        switch (type)   // assign new value
         {
             default:
             case EMCI_ARG_UINT32: *((uint32_t *)e->var) = argv[1].u; break;
@@ -125,8 +142,8 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
     else /*if (argc == 1)*/
     {
         char fmt[] = "%.0f" EMCI_ENDL;
-        // display current value
-        switch (type)
+
+        switch (type)   // display current value
         {
             default:
             case EMCI_ARG_UINT32: EMCI_PRINTF("%u" EMCI_ENDL, *((uint32_t *)e->var)); break;
