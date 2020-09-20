@@ -35,6 +35,8 @@ void emci_main_loop(emci_env_t *env)
             EMCI_IDLE_TASK();
             EMCI_GET_CHAR(c);
 
+            // remove potential garbage from upper bits
+            c &= 0xFF;
             // convert several special characters
             if (c == '\t')
                 c = ' ';	// replace tabs with spaces
