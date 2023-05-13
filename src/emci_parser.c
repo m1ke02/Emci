@@ -18,8 +18,8 @@ static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_
 
 void emci_main_loop(emci_env_t *env)
 {
-    int c;
-    char *cursor;
+    int c = 0;
+    char *cursor = NULL;
     char *tokens[EMCI_MAX_COMMANDS];
 
     while (1)
@@ -34,6 +34,8 @@ void emci_main_loop(emci_env_t *env)
         {
             EMCI_IDLE_TASK();
             EMCI_GET_CHAR(c);
+
+            //EMCI_PRINTF("[%d] ", c); continue;
 
             // remove potential garbage from upper bits
             c &= 0xFF;

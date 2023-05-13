@@ -2,6 +2,7 @@
 #include "emci_parser.h"
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 const char *emci_arg_type_message(emci_arg_type_t type)
 {
@@ -62,8 +63,8 @@ void emci_arg_print(const emci_arg_t *v)
 
     switch (v->type)
     {
-        case EMCI_ARG_UINT32: EMCI_PRINTF("%s[%u]", type, v->u); break;
-        case EMCI_ARG_INT32:  EMCI_PRINTF("%s[%d]", type, v->i); break;
+        case EMCI_ARG_UINT32: EMCI_PRINTF("%s[%"PRIu32"]", type, v->u); break;
+        case EMCI_ARG_INT32:  EMCI_PRINTF("%s[%"PRId32"]", type, v->i); break;
         case EMCI_ARG_FLOAT:  EMCI_PRINTF("%s[%f]", type, v->f); break;
         case EMCI_ARG_BOOL:   EMCI_PRINTF(v->b? "%s[true]": "%s[false]", type); break;
         case EMCI_ARG_STRING: EMCI_PRINTF("%s[%s]", type, v->s); break;

@@ -1,6 +1,7 @@
 #include "emci_std_handlers.h"
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 static void emci_help_handler0(uint_fast8_t i);
 
@@ -15,7 +16,7 @@ emci_status_t emci_printargs_handler(uint8_t argc, emci_arg_t *argv, emci_env_t 
     }
     else for (uint32_t i = 1; i < argc; i ++)
     {
-        EMCI_PRINTF(" P%02d=", i);
+        EMCI_PRINTF(" P%02"PRIu32"=", i);
         emci_arg_print(&(argv[i]));
         EMCI_PRINTF(EMCI_ENDL);
     }
@@ -85,15 +86,19 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
         type = (emci_arg_type_t)env->cmd->arg_types[0];
         if (type == EMCI_ARG_STRING)
             return EMCI_STATUS_NOT_SUPPORTED;
-        if (e->max.type != type || e->min.type != type)
+        if (((e->max.type != EMCI_ARG_VOID) && (e->max.type != type)) ||
+            ((e->min.type != EMCI_ARG_VOID) && e->min.type != type))
             return EMCI_STATUS_PROFILE_ERROR;
     }
     else if (strlen(env->cmd->arg_types) == 0)
     {
         // argument list contains no items for readonly variable (argc == 1)
-        type = e->min.type;
-        if (e->max.type != type)
+        // either min or max is required to determine variable type
+        if ((e->min.type == EMCI_ARG_VOID) && (e->max.type == EMCI_ARG_VOID))
             return EMCI_STATUS_PROFILE_ERROR;
+        if ((e->min.type != EMCI_ARG_VOID) && (e->max.type != EMCI_ARG_VOID) && (e->max.type != e->min.type))
+            return EMCI_STATUS_PROFILE_ERROR;
+        type = (e->min.type != EMCI_ARG_VOID) ? e->min.type : e->max.type;
     }
     else
     {
@@ -102,40 +107,47 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 
     if (argc == 2)
     {
-        switch (type)   // compare to max
+        if (e->max.type != EMCI_ARG_VOID)
         {
-            default:
-            case EMCI_ARG_UINT32: cmp = (argv[1].u > e->max.u); break;
-            case EMCI_ARG_INT32: cmp = (argv[1].i > e->max.i); break;
-            case EMCI_ARG_FLOAT: cmp = (argv[1].f > e->max.f); break;
+            switch (type)   // compare to max
+            {
+                case EMCI_ARG_BOOL: cmp = false; break;
+                case EMCI_ARG_UINT32: cmp = (argv[1].u > e->max.u); break;
+                case EMCI_ARG_INT32: cmp = (argv[1].i > e->max.i); break;
+                case EMCI_ARG_FLOAT: cmp = (argv[1].f > e->max.f); break;
+                default: env->resp.param = 1; return EMCI_STATUS_NOT_SUPPORTED;
+            }
+            if (cmp)
+            {
+                env->resp.param = 1;
+                return EMCI_STATUS_ARG_TOO_HIGH;
+            }
         }
 
-        if (cmp)
+        if (e->min.type != EMCI_ARG_VOID)
         {
-            env->resp.param = 1;
-            return EMCI_STATUS_ARG_TOO_HIGH;
-        }
-
-        switch (type)   // compare to min
-        {
-            default:
-            case EMCI_ARG_UINT32: cmp = (argv[1].u < e->min.u); break;
-            case EMCI_ARG_INT32: cmp = (argv[1].i < e->min.i); break;
-            case EMCI_ARG_FLOAT: cmp = (argv[1].f < e->min.f); break;
-        }
-
-        if (cmp)
-        {
-            env->resp.param = 1;
-            return EMCI_STATUS_ARG_TOO_LOW;
+            switch (type)   // compare to min
+            {
+                case EMCI_ARG_BOOL: cmp = false; break;
+                case EMCI_ARG_UINT32: cmp = (argv[1].u < e->min.u); break;
+                case EMCI_ARG_INT32: cmp = (argv[1].i < e->min.i); break;
+                case EMCI_ARG_FLOAT: cmp = (argv[1].f < e->min.f); break;
+                default: break;
+            }
+            if (cmp)
+            {
+                env->resp.param = 1;
+                return EMCI_STATUS_ARG_TOO_LOW;
+            }
         }
 
         switch (type)   // assign new value
         {
-            default:
+            case EMCI_ARG_BOOL: *((bool *)e->var) = argv[1].b; break;
             case EMCI_ARG_UINT32: *((uint32_t *)e->var) = argv[1].u; break;
             case EMCI_ARG_INT32: *((int32_t *)e->var) = argv[1].i; break;
             case EMCI_ARG_FLOAT: *((float *)e->var) = argv[1].f; break;
+            default: break;
         }
         return EMCI_STATUS_OK;
     }
@@ -145,13 +157,14 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 
         switch (type)   // display current value
         {
-            default:
-            case EMCI_ARG_UINT32: EMCI_PRINTF("%u" EMCI_ENDL, *((uint32_t *)e->var)); break;
-            case EMCI_ARG_INT32: EMCI_PRINTF("%d" EMCI_ENDL, *((int32_t *)e->var)); break;
+            case EMCI_ARG_BOOL: EMCI_PRINTF(*((bool *)e->var) ? "true" EMCI_ENDL : "false" EMCI_ENDL); break;
+            case EMCI_ARG_UINT32: EMCI_PRINTF("%"PRIu32 EMCI_ENDL, *((uint32_t *)e->var)); break;
+            case EMCI_ARG_INT32: EMCI_PRINTF("%"PRId32 EMCI_ENDL, *((int32_t *)e->var)); break;
             case EMCI_ARG_FLOAT:
                 fmt[2] = '0' + ((e->prec <= 9)? e->prec: 9);
                 EMCI_PRINTF(fmt, *((float *)e->var));
                 break;
+            default: return EMCI_STATUS_NOT_SUPPORTED;
         }
         return EMCI_STATUS_OK;
     }
