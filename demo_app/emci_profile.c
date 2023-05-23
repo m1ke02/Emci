@@ -5,6 +5,9 @@
 uint32_t cmd_var_setpoint = 200;
 float cmd_var_fff = 123.4;
 float cmd_var_delay = 888.8;
+int32_t cmd_var_llim = 0;
+int32_t cmd_var_ulim = 0;
+char cmd_var_str[8] = "InitVal";
 
 const emci_command_t cmd_array[] =
 {
@@ -13,16 +16,28 @@ const emci_command_t cmd_array[] =
     "Display version information", "<strA>\0strB\0<strC>\0strD"},
 
     {"setpoint", emci_var_handler, "u", 1,
-    &(emci_var_handler_data_t){.var=&cmd_var_setpoint, .min={EMCI_ARG('u'), {.u=100}}, .max={EMCI_ARG('u'),{.u=200}}},
+    &(emci_var_handler_data_t){.var=&cmd_var_setpoint, .type=EMCI_ARG_UINT32, .min={EMCI_ARG('u'), {.u=100}}, .max={EMCI_ARG('u'),{.u=200}}},
     "Display/change setpoint value", "value"},
 
     {"delay", emci_var_handler, "f", 1,
-    &(emci_var_handler_data_t){.var=&cmd_var_delay, .min={EMCI_ARG('f'), {.f=0.0}}, .max={EMCI_ARG('f'), {.f=60.0}}, .prec=1},
+    &(emci_var_handler_data_t){.var=&cmd_var_delay, .type=EMCI_ARG_FLOAT, .min={EMCI_ARG('f'), {.f=0.0}}, .max={EMCI_ARG('f'), {.f=60.0}}, .prec=1},
     "Display/change delay", "delay[ms]"},
 
     {"fff", emci_var_handler, "f", 1,
-    &(emci_var_handler_data_t){.var=&cmd_var_fff, .min={EMCI_ARG('f'), {.f=.1}}, .max={EMCI_ARG('f'), {.f=.9}}, .prec=4},
+    &(emci_var_handler_data_t){.var=&cmd_var_fff, .type=EMCI_ARG_FLOAT, .min={EMCI_ARG('f'), {.f=.1}}, .max={EMCI_ARG('f'), {.f=.9}}, .prec=4},
     "Display/change fff value", "value"},
+
+    {"llim", emci_var_handler, "i", 1,
+    &(emci_var_handler_data_t){.var=&cmd_var_llim, .type=EMCI_ARG_INT32, .min={EMCI_ARG('i'), {.i=-100}}},
+    "Display/change llim value (only lower limit)", "value"},
+
+    {"ulim", emci_var_handler, "i", 1,
+    &(emci_var_handler_data_t){.var=&cmd_var_ulim, .type=EMCI_ARG_INT32, .max={EMCI_ARG('i'), {.i=100}}},
+    "Display/change ulim value (only upper limit)", "value"},
+
+    {"str", emci_var_handler, "s", 1,
+    &(emci_var_handler_data_t){.var=&cmd_var_str, .type=EMCI_ARG_STRING, .length=sizeof(cmd_var_str)},
+    "Display/change str value", "value"},
 
     {"test", test_handler, "i", 0,
     NULL,

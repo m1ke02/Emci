@@ -73,32 +73,26 @@ static void emci_help_handler0(uint_fast8_t i)
 emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
     emci_var_handler_data_t *e = (emci_var_handler_data_t *)env->cmd->extra;
-    emci_arg_type_t type;
     bool cmp = false;
 
     // general profile consistency check
     if (e->var == NULL)
         return EMCI_STATUS_PROFILE_ERROR;
-
-    if (strlen(env->cmd->arg_types) == 1)
+    if (e->type == EMCI_ARG_VOID)
+        return EMCI_STATUS_PROFILE_ERROR;
+    size_t spec_argc = strlen(env->cmd->arg_types);
+    if (spec_argc == 1)
     {
         // argument list contains 1 item for writeable variable (argc == 1 or 2)
-        type = (emci_arg_type_t)env->cmd->arg_types[0];
-        if (type == EMCI_ARG_STRING)
-            return EMCI_STATUS_NOT_SUPPORTED;
-        if (((e->max.type != EMCI_ARG_VOID) && (e->max.type != type)) ||
-            ((e->min.type != EMCI_ARG_VOID) && e->min.type != type))
+        if (e->type != (emci_arg_type_t)env->cmd->arg_types[0])
+            return EMCI_STATUS_PROFILE_ERROR;
+        if (((e->max.type != EMCI_ARG_VOID) && (e->max.type != e->type)) ||
+            ((e->min.type != EMCI_ARG_VOID) && e->min.type != e->type))
             return EMCI_STATUS_PROFILE_ERROR;
     }
-    else if (strlen(env->cmd->arg_types) == 0)
+    else if (spec_argc == 0)
     {
         // argument list contains no items for readonly variable (argc == 1)
-        // either min or max is required to determine variable type
-        if ((e->min.type == EMCI_ARG_VOID) && (e->max.type == EMCI_ARG_VOID))
-            return EMCI_STATUS_PROFILE_ERROR;
-        if ((e->min.type != EMCI_ARG_VOID) && (e->max.type != EMCI_ARG_VOID) && (e->max.type != e->min.type))
-            return EMCI_STATUS_PROFILE_ERROR;
-        type = (e->min.type != EMCI_ARG_VOID) ? e->min.type : e->max.type;
     }
     else
     {
@@ -109,8 +103,9 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
     {
         if (e->max.type != EMCI_ARG_VOID)
         {
-            switch (type)   // compare to max
+            switch (e->type)   // compare to max
             {
+                case EMCI_ARG_STRING:
                 case EMCI_ARG_BOOL: cmp = false; break;
                 case EMCI_ARG_UINT32: cmp = (argv[1].u > e->max.u); break;
                 case EMCI_ARG_INT32: cmp = (argv[1].i > e->max.i); break;
@@ -126,8 +121,9 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 
         if (e->min.type != EMCI_ARG_VOID)
         {
-            switch (type)   // compare to min
+            switch (e->type)   // compare to min
             {
+                case EMCI_ARG_STRING:
                 case EMCI_ARG_BOOL: cmp = false; break;
                 case EMCI_ARG_UINT32: cmp = (argv[1].u < e->min.u); break;
                 case EMCI_ARG_INT32: cmp = (argv[1].i < e->min.i); break;
@@ -141,8 +137,12 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
             }
         }
 
-        switch (type)   // assign new value
+        switch (e->type)   // assign new value
         {
+            case EMCI_ARG_STRING:
+                strncpy((char *)e->var, argv[1].s, e->length);
+                ((char *)e->var)[e->length - 1] = '\0';
+                break;
             case EMCI_ARG_BOOL: *((bool *)e->var) = argv[1].b; break;
             case EMCI_ARG_UINT32: *((uint32_t *)e->var) = argv[1].u; break;
             case EMCI_ARG_INT32: *((int32_t *)e->var) = argv[1].i; break;
@@ -155,8 +155,9 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
     {
         char fmt[] = "%.0f" EMCI_ENDL;
 
-        switch (type)   // display current value
+        switch (e->type)   // display current value
         {
+            case EMCI_ARG_STRING: EMCI_PRINTF("%s" EMCI_ENDL, (char *)e->var); break;
             case EMCI_ARG_BOOL: EMCI_PRINTF(*((bool *)e->var) ? "true" EMCI_ENDL : "false" EMCI_ENDL); break;
             case EMCI_ARG_UINT32: EMCI_PRINTF("%"PRIu32 EMCI_ENDL, *((uint32_t *)e->var)); break;
             case EMCI_ARG_INT32: EMCI_PRINTF("%"PRId32 EMCI_ENDL, *((int32_t *)e->var)); break;
