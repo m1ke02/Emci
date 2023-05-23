@@ -39,6 +39,10 @@ const emci_command_t cmd_array[] =
     &(emci_var_handler_data_t){.var=&cmd_var_str, .type=EMCI_ARG_STRING, .length=sizeof(cmd_var_str)},
     "Display/change str value", "value"},
 
+    {"vars", emci_vars_handler, "", 0,
+    NULL,
+    "Print list of all variables", NULL},
+
     {"test", test_handler, "i", 0,
     NULL,
     "Test the system", "p1"},

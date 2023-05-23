@@ -57,18 +57,36 @@ emci_status_t emci_arg_convert(const char *s, emci_arg_type_t type, emci_arg_t *
     return EMCI_STATUS_OK;
 }
 
-void emci_arg_print(const emci_arg_t *v)
+bool emci_arg_print(emci_arg_t arg, uint8_t prec)
 {
-    const char *type = emci_arg_type_message(v->type);
-
-    switch (v->type)
+    switch (arg.type)
     {
-        case EMCI_ARG_UINT32: EMCI_PRINTF("%s[%"PRIu32"]", type, v->u); break;
-        case EMCI_ARG_INT32:  EMCI_PRINTF("%s[%"PRId32"]", type, v->i); break;
-        case EMCI_ARG_FLOAT:  EMCI_PRINTF("%s[%f]", type, v->f); break;
-        case EMCI_ARG_BOOL:   EMCI_PRINTF(v->b? "%s[true]": "%s[false]", type); break;
-        case EMCI_ARG_STRING: EMCI_PRINTF("%s[%s]", type, v->s); break;
-        case EMCI_ARG_VOID:   EMCI_PRINTF("%s[]", type); break;
-        default:              EMCI_PRINTF("%s", type); break;
+        case EMCI_ARG_STRING: return emci_print_value(arg.s, arg.type, prec);
+        case EMCI_ARG_BOOL: return emci_print_value(&arg.b, arg.type, prec);
+        case EMCI_ARG_UINT32: return emci_print_value(&arg.u, arg.type, prec);
+        case EMCI_ARG_INT32: return emci_print_value(&arg.i, arg.type, prec);
+        case EMCI_ARG_FLOAT: return emci_print_value(&arg.f, arg.type, prec);
+        case EMCI_ARG_VOID: EMCI_PRINTF("<void>"); return true;
+        default: return false;
     }
+}
+
+bool emci_print_value(const void *data, emci_arg_type_t type, uint8_t prec)
+{
+    char fmt[] = "%.0f";
+
+    switch (type)
+    {
+        case EMCI_ARG_STRING: EMCI_PRINTF("%s", (char *)data); break;
+        case EMCI_ARG_BOOL: EMCI_PRINTF(*((bool *)data) ? "true" : "false"); break;
+        case EMCI_ARG_UINT32: EMCI_PRINTF("%"PRIu32, *((uint32_t *)data)); break;
+        case EMCI_ARG_INT32: EMCI_PRINTF("%"PRId32, *((int32_t *)data)); break;
+        case EMCI_ARG_FLOAT:
+            fmt[2] = '0' + ((prec <= 9)? prec: 9);
+            EMCI_PRINTF(fmt, *((float *)data));
+            break;
+        case EMCI_ARG_VOID: EMCI_PRINTF("<void>"); break;
+        default: return false;
+    }
+    return true;
 }

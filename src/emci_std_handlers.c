@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 static void emci_help_handler0(uint_fast8_t i);
+static void emci_pad_with_spaces(int width);
 
 extern const emci_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
@@ -17,7 +18,7 @@ emci_status_t emci_printargs_handler(uint8_t argc, emci_arg_t *argv, emci_env_t 
     else for (uint32_t i = 1; i < argc; i ++)
     {
         EMCI_PRINTF(" P%02"PRIu32"=", i);
-        emci_arg_print(&(argv[i]));
+        emci_arg_print(argv[i], 4);
         EMCI_PRINTF(EMCI_ENDL);
     }
 
@@ -43,7 +44,7 @@ emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
     else
     {
         // list all commands
-        EMCI_PRINTF("%"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", " List of supported commands:");
+        EMCI_PRINTF("List of supported commands:" EMCI_ENDL);
         for (i = 0; i < cmd_array_length; i ++)
             emci_help_handler0(i);
     }
@@ -53,7 +54,8 @@ emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 
 static void emci_help_handler0(uint_fast8_t i)
 {
-    EMCI_PRINTF("%"EMCI_MAX_NAME_LENGTH"s", cmd_array[i].name);
+    emci_pad_with_spaces(EMCI_MAX_NAME_LENGTH - 1 - EMCI_PRINTF("%s", cmd_array[i].name));
+
     const char *atp = cmd_array[i].arg_types;
     const char *adp = cmd_array[i].arg_dscr;
     int_fast8_t req = strlen(atp) - cmd_array[i].arg_optional;
@@ -67,7 +69,9 @@ static void emci_help_handler0(uint_fast8_t i)
         atp ++;
         req --;
     }
-    EMCI_PRINTF(EMCI_ENDL " %"EMCI_MAX_NAME_LENGTH"s%s" EMCI_ENDL EMCI_ENDL, "", cmd_array[i].cmd_dscr);
+    EMCI_PRINTF(EMCI_ENDL);
+    emci_pad_with_spaces(EMCI_MAX_NAME_LENGTH);
+    EMCI_PRINTF("%s" EMCI_ENDL EMCI_ENDL, cmd_array[i].cmd_dscr);
 }
 
 emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
@@ -153,20 +157,41 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
     }
     else /*if (argc == 1)*/
     {
-        char fmt[] = "%.0f" EMCI_ENDL;
-
-        switch (e->type)   // display current value
+        if (emci_print_value(e->var, e->type, e->prec)) // display current value
         {
-            case EMCI_ARG_STRING: EMCI_PRINTF("%s" EMCI_ENDL, (char *)e->var); break;
-            case EMCI_ARG_BOOL: EMCI_PRINTF(*((bool *)e->var) ? "true" EMCI_ENDL : "false" EMCI_ENDL); break;
-            case EMCI_ARG_UINT32: EMCI_PRINTF("%"PRIu32 EMCI_ENDL, *((uint32_t *)e->var)); break;
-            case EMCI_ARG_INT32: EMCI_PRINTF("%"PRId32 EMCI_ENDL, *((int32_t *)e->var)); break;
-            case EMCI_ARG_FLOAT:
-                fmt[2] = '0' + ((e->prec <= 9)? e->prec: 9);
-                EMCI_PRINTF(fmt, *((float *)e->var));
-                break;
-            default: return EMCI_STATUS_NOT_SUPPORTED;
+            EMCI_PRINTF(EMCI_ENDL);
+            return EMCI_STATUS_OK;
         }
-        return EMCI_STATUS_OK;
+        else
+        {
+            return EMCI_STATUS_NOT_SUPPORTED;
+        }
     }
+}
+
+emci_status_t emci_vars_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
+{
+    uint_fast8_t i;
+
+    EMCI_PRINTF("List of variables:" EMCI_ENDL);
+
+    for (i = 0; i < cmd_array_length; i ++)
+    {
+        if (cmd_array[i].handler == emci_var_handler)
+        {
+            emci_var_handler_data_t *e = (emci_var_handler_data_t *)cmd_array[i].extra;
+            emci_pad_with_spaces(EMCI_MAX_NAME_LENGTH - EMCI_PRINTF("%s %s", emci_arg_type_message(e->type), cmd_array[i].name));
+            EMCI_PRINTF(" = ");
+            if (!emci_print_value(e->var, e->type, e->prec))
+                return EMCI_STATUS_NOT_SUPPORTED;
+            EMCI_PRINTF(EMCI_ENDL);
+        }
+    }
+    return EMCI_STATUS_OK;
+}
+
+static void emci_pad_with_spaces(int width)
+{
+    for (; width > 0; width --)
+        EMCI_PUT_CHAR(' ');
 }
