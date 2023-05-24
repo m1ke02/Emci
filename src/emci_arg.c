@@ -13,7 +13,7 @@ const char *emci_arg_type_message(emci_arg_type_t type)
         case EMCI_ARG_INT32: return "int32";
         case EMCI_ARG_FLOAT: return "float";
         case EMCI_ARG_BOOL: return "bool";
-        case EMCI_ARG_STRING: return "str";
+        case EMCI_ARG_STRING: return "string";
         default: return "?";
     }
 }

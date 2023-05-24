@@ -46,6 +46,9 @@ typedef struct
 
 #define EMCI_ARG(ch) ((emci_arg_type_t)(ch)) // removes "enumerated type mixed with another type" warning
 
+#define EMCI_XSTR(a) _EMCI_XSTR(a)
+#define _EMCI_XSTR(a) #a
+
 const char *emci_arg_type_message(emci_arg_type_t type);
 emci_status_t emci_arg_convert(const char *s, emci_arg_type_t type, emci_arg_t *v);
 bool emci_arg_print(emci_arg_t arg, uint8_t prec);

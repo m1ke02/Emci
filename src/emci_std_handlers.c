@@ -4,7 +4,6 @@
 #include <inttypes.h>
 
 static void emci_help_handler0(uint_fast8_t i);
-static void emci_pad_with_spaces(int width);
 
 extern const emci_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
@@ -54,7 +53,7 @@ emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 
 static void emci_help_handler0(uint_fast8_t i)
 {
-    emci_pad_with_spaces(EMCI_MAX_NAME_LENGTH - 1 - EMCI_PRINTF("%s", cmd_array[i].name));
+    EMCI_PRINTF("%"EMCI_XSTR(EMCI_MAX_NAME_LENGTH)"s", cmd_array[i].name);
 
     const char *atp = cmd_array[i].arg_types;
     const char *adp = cmd_array[i].arg_dscr;
@@ -69,9 +68,7 @@ static void emci_help_handler0(uint_fast8_t i)
         atp ++;
         req --;
     }
-    EMCI_PRINTF(EMCI_ENDL);
-    emci_pad_with_spaces(EMCI_MAX_NAME_LENGTH);
-    EMCI_PRINTF("%s" EMCI_ENDL EMCI_ENDL, cmd_array[i].cmd_dscr);
+    EMCI_PRINTF(EMCI_ENDL "%"EMCI_XSTR(EMCI_MAX_NAME_LENGTH)"s %s" EMCI_ENDL EMCI_ENDL, "", cmd_array[i].cmd_dscr);
 }
 
 emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
@@ -180,18 +177,11 @@ emci_status_t emci_vars_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
         if (cmd_array[i].handler == emci_var_handler)
         {
             emci_var_handler_data_t *e = (emci_var_handler_data_t *)cmd_array[i].extra;
-            emci_pad_with_spaces(EMCI_MAX_NAME_LENGTH - EMCI_PRINTF("%s %s", emci_arg_type_message(e->type), cmd_array[i].name));
-            EMCI_PRINTF(" = ");
+            EMCI_PRINTF("%-6s %-"EMCI_XSTR(EMCI_MAX_NAME_LENGTH)"s ", emci_arg_type_message(e->type), cmd_array[i].name);
             if (!emci_print_value(e->var, e->type, e->prec))
                 return EMCI_STATUS_NOT_SUPPORTED;
             EMCI_PRINTF(EMCI_ENDL);
         }
     }
     return EMCI_STATUS_OK;
-}
-
-static void emci_pad_with_spaces(int width)
-{
-    for (; width > 0; width --)
-        EMCI_PUT_CHAR(' ');
 }
