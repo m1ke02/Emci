@@ -138,6 +138,15 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
             }
         }
 
+        if (e->verify_handler != NULL)
+        {
+            emci_status_t verify_status = e->verify_handler(argv[1], e);
+            if (verify_status != EMCI_STATUS_OK)
+            {
+                return verify_status;
+            }
+        }
+
         switch (e->type)   // assign new value
         {
             case EMCI_ARG_STRING:

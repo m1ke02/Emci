@@ -7,7 +7,10 @@ float cmd_var_fff = 123.4;
 float cmd_var_delay = 888.8;
 int32_t cmd_var_llim = 0;
 int32_t cmd_var_ulim = 0;
+int32_t cmd_var_vh = 0;
 char cmd_var_str[8] = "InitVal";
+
+emci_status_t cmd_vh_verify_handler(emci_arg_t arg, struct emci_var_handler_data_tag *data);
 
 const emci_command_t cmd_array[] =
 {
@@ -34,6 +37,10 @@ const emci_command_t cmd_array[] =
     {"ulim", emci_var_handler, "i", 1,
     &(emci_var_handler_data_t){.var=&cmd_var_ulim, .type=EMCI_ARG_INT32, .max={EMCI_ARG('i'), {.i=100}}},
     "Display/change ulim value (only upper limit)", "value"},
+
+    {"vh", emci_var_handler, "i", 1,
+    &(emci_var_handler_data_t){.var=&cmd_var_vh, .type=EMCI_ARG_INT32, .verify_handler=cmd_vh_verify_handler},
+    "Display/change vh value (custom verification)", "value"},
 
     {"str", emci_var_handler, "s", 1,
     &(emci_var_handler_data_t){.var=&cmd_var_str, .type=EMCI_ARG_STRING, .length=sizeof(cmd_var_str)},
@@ -85,6 +92,15 @@ emci_status_t test_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 
     EMCI_PRINTF("test_handler: %d" EMCI_ENDL, argv[1].i);
     return EMCI_STATUS_OK;
+}
+
+emci_status_t cmd_vh_verify_handler(emci_arg_t arg, struct emci_var_handler_data_tag *data)
+{
+    // accept only even numbers
+    if (arg.i % 2 != 0)
+        return EMCI_STATUS_ARG_INVALID;
+    else
+        return EMCI_STATUS_OK;
 }
 
 const char *emci_app_status_message(emci_status_t status)

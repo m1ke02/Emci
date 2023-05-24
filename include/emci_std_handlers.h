@@ -3,7 +3,7 @@
 
 #include "emci_parser.h"
 
-typedef struct
+typedef struct emci_var_handler_data_tag
 {
     void *var;
     emci_arg_type_t type;
@@ -14,6 +14,7 @@ typedef struct
         uint8_t prec;
         uint8_t length;
     };
+    emci_status_t (*verify_handler)(emci_arg_t arg, struct emci_var_handler_data_tag *data);
 } emci_var_handler_data_t;
 
 emci_status_t emci_printargs_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env);
