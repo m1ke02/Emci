@@ -143,6 +143,7 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
             emci_status_t verify_status = e->verify_handler(argv[1], e);
             if (verify_status != EMCI_STATUS_OK)
             {
+                env->resp.param = 1;
                 return verify_status;
             }
         }
