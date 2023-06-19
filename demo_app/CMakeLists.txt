@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.0)
+cmake_minimum_required(VERSION 3.0)
 project(EmciDemoApp LANGUAGES C)
 set(EmciLibraryPath ${EmciDemoApp_SOURCE_DIR}/..)
 add_executable(EmciDemoAppExe
