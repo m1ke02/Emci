@@ -35,7 +35,8 @@ void emci_main_loop(emci_env_t *env)
             EMCI_IDLE_TASK();
             EMCI_GET_CHAR(c);
 
-            //EMCI_PRINTF("[%d] ", c); continue;
+            if (c == EOF)
+                return;
 
             // remove potential garbage from upper bits
             c &= 0xFF;
