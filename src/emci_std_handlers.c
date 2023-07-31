@@ -71,6 +71,12 @@ static void emci_help_handler0(uint_fast8_t i)
     EMCI_PRINTF(EMCI_ENDL "%"EMCI_XSTR(EMCI_MAX_NAME_LENGTH)"s %s" EMCI_ENDL EMCI_ENDL, "", cmd_array[i].cmd_dscr);
 }
 
+emci_status_t emci_exit_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
+{
+    env->resp.exit = true;
+    return EMCI_STATUS_OK;
+}
+
 emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
 {
     emci_var_handler_data_t *e = (emci_var_handler_data_t *)env->cmd->extra;

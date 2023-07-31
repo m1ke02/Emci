@@ -75,6 +75,8 @@ void emci_main_loop(emci_env_t *env)
                 {
                     //EMCI_PRINTF("cmd%d=[%s] EMCI_ENDL", i, tokens[i]);
                     emci_process_command(tokens[i], env);
+                    if (env->resp.exit)
+                        return;
                 }
 
                 // we are done, go to next line
@@ -110,6 +112,7 @@ void emci_process_command(char *command, emci_env_t *env)
         env->resp.status = EMCI_STATUS_OK;
         env->resp.msg = NULL;
         env->resp.param = 0;
+        env->resp.exit = false;
 
         // search for requested command
         uint_fast8_t cmd_num;

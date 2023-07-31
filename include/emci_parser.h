@@ -8,6 +8,7 @@ typedef struct emci_response_tag
     emci_status_t status;
     uint8_t param;
     char *msg;
+    bool exit;
 } emci_response_t;
 
 struct emci_env_tag;
