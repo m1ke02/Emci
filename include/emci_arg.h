@@ -49,9 +49,11 @@ typedef struct
 #define EMCI_XSTR(a) _EMCI_XSTR(a)
 #define _EMCI_XSTR(a) #a
 
+struct emci_env_tag; // forward declaration, defined in emci_parser.h
+
 const char *emci_arg_type_message(emci_arg_type_t type);
 emci_status_t emci_arg_convert(const char *s, emci_arg_type_t type, emci_arg_t *v);
-bool emci_arg_print(emci_arg_t arg, uint8_t prec);
-bool emci_print_value(const void *data, emci_arg_type_t type, uint8_t prec);
+bool emci_arg_print(emci_arg_t arg, uint8_t prec, struct emci_env_tag *env);
+bool emci_print_value(const void *data, emci_arg_type_t type, uint8_t prec, struct emci_env_tag *env);
 
 #endif

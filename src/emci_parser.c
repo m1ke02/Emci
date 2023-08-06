@@ -7,14 +7,14 @@
 #include <math.h>
 
 //	external application-dependent functions
-void emci_prompt(void);
+void emci_prompt(emci_env_t *env);
 const char *emci_app_status_message(emci_status_t status);
 
 //	external application-dependent variables
 extern const emci_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
 
-static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_t *resp);
+static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_t *resp, emci_env_t *env);
 
 void emci_main_loop(emci_env_t *env)
 {
@@ -27,7 +27,7 @@ void emci_main_loop(emci_env_t *env)
         // prepare to command line parsing
         cursor = env->cmd_buffer;
         *cursor = '\0'; // start from empty line
-        emci_prompt();
+        emci_prompt(env);
 
         // read command line char by char
         while (1)
@@ -175,11 +175,11 @@ void emci_process_command(char *command, emci_env_t *env)
             }
         }
 
-        emci_response_handler(ntokens, tokens, &(env->resp));
+        emci_response_handler(ntokens, tokens, &(env->resp), env);
     }
 }
 
-static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_t *resp)
+static void emci_response_handler(uint8_t argc, char *raw_argv[], emci_response_t *resp, emci_env_t *env)
 {
     EMCI_PRINTF("~%s %d (%s", raw_argv[0], resp->status, emci_status_message(resp->status));
 

@@ -30,6 +30,7 @@ typedef struct emci_env_tag
     emci_arg_t arg_buffer[EMCI_MAX_ARGS+1]; // plus 1 for command name
     emci_command_t *cmd;
     emci_response_t resp;
+    void *extra;
 } emci_env_t;
 
 void emci_main_loop(emci_env_t *env);

@@ -57,21 +57,21 @@ emci_status_t emci_arg_convert(const char *s, emci_arg_type_t type, emci_arg_t *
     return EMCI_STATUS_OK;
 }
 
-bool emci_arg_print(emci_arg_t arg, uint8_t prec)
+bool emci_arg_print(emci_arg_t arg, uint8_t prec, emci_env_t *env)
 {
     switch (arg.type)
     {
-        case EMCI_ARG_STRING: return emci_print_value(arg.s, arg.type, prec);
-        case EMCI_ARG_BOOL: return emci_print_value(&arg.b, arg.type, prec);
-        case EMCI_ARG_UINT32: return emci_print_value(&arg.u, arg.type, prec);
-        case EMCI_ARG_INT32: return emci_print_value(&arg.i, arg.type, prec);
-        case EMCI_ARG_FLOAT: return emci_print_value(&arg.f, arg.type, prec);
+        case EMCI_ARG_STRING: return emci_print_value(arg.s, arg.type, prec, env);
+        case EMCI_ARG_BOOL: return emci_print_value(&arg.b, arg.type, prec, env);
+        case EMCI_ARG_UINT32: return emci_print_value(&arg.u, arg.type, prec, env);
+        case EMCI_ARG_INT32: return emci_print_value(&arg.i, arg.type, prec, env);
+        case EMCI_ARG_FLOAT: return emci_print_value(&arg.f, arg.type, prec, env);
         case EMCI_ARG_VOID: EMCI_PRINTF("<void>"); return true;
         default: return false;
     }
 }
 
-bool emci_print_value(const void *data, emci_arg_type_t type, uint8_t prec)
+bool emci_print_value(const void *data, emci_arg_type_t type, uint8_t prec, emci_env_t *env)
 {
     char fmt[] = "%.0f";
 

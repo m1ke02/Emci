@@ -69,7 +69,7 @@ const emci_command_t cmd_array[] =
 
 const uint_fast8_t cmd_array_length = (sizeof(cmd_array) / sizeof(emci_command_t));
 
-void emci_prompt(void)
+void emci_prompt(emci_env_t *env)
 {
     EMCI_PRINTF("emci[%u]>", cmd_var_setpoint);
 }
@@ -98,7 +98,7 @@ emci_status_t test_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
     return EMCI_STATUS_OK;
 }
 
-emci_status_t cmd_vh_verify_handler(emci_arg_t arg, struct emci_var_handler_data_tag *data)
+emci_status_t cmd_vh_verify_handler(emci_arg_t arg, emci_var_handler_data_t *data)
 {
     // accept only even numbers
     if (arg.i % 2 != 0)

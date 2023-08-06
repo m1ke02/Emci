@@ -3,7 +3,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-static void emci_help_handler0(uint_fast8_t i);
+static void emci_help_handler0(uint_fast8_t i, emci_env_t *env);
 
 extern const emci_command_t cmd_array[];
 extern const uint_fast8_t cmd_array_length;
@@ -17,7 +17,7 @@ emci_status_t emci_printargs_handler(uint8_t argc, emci_arg_t *argv, emci_env_t 
     else for (uint32_t i = 1; i < argc; i ++)
     {
         EMCI_PRINTF(" P%02"PRIu32"=", i);
-        emci_arg_print(argv[i], 4);
+        emci_arg_print(argv[i], 4, env);
         EMCI_PRINTF(EMCI_ENDL);
     }
 
@@ -34,7 +34,7 @@ emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
         for (i = 0; i < cmd_array_length; i ++)
             if (strcmp(cmd_array[i].name, argv[1].s) == 0)
             {
-                emci_help_handler0(i);
+                emci_help_handler0(i, env);
                 return EMCI_STATUS_OK;
             }
         env->resp.param = 1;
@@ -45,13 +45,13 @@ emci_status_t emci_help_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
         // list all commands
         EMCI_PRINTF("List of supported commands:" EMCI_ENDL);
         for (i = 0; i < cmd_array_length; i ++)
-            emci_help_handler0(i);
+            emci_help_handler0(i, env);
     }
 
     return EMCI_STATUS_OK;
 }
 
-static void emci_help_handler0(uint_fast8_t i)
+static void emci_help_handler0(uint_fast8_t i, emci_env_t *env)
 {
     EMCI_PRINTF("%"EMCI_XSTR(EMCI_MAX_NAME_LENGTH)"s", cmd_array[i].name);
 
@@ -170,7 +170,7 @@ emci_status_t emci_var_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
     }
     else /*if (argc == 1)*/
     {
-        if (emci_print_value(e->var, e->type, e->prec)) // display current value
+        if (emci_print_value(e->var, e->type, e->prec, env)) // display current value
         {
             EMCI_PRINTF(EMCI_ENDL);
             return EMCI_STATUS_OK;
@@ -194,7 +194,7 @@ emci_status_t emci_vars_handler(uint8_t argc, emci_arg_t *argv, emci_env_t *env)
         {
             emci_var_handler_data_t *e = (emci_var_handler_data_t *)cmd_array[i].extra;
             EMCI_PRINTF("%-6s %-"EMCI_XSTR(EMCI_MAX_NAME_LENGTH)"s ", emci_arg_type_message(e->type), cmd_array[i].name);
-            if (!emci_print_value(e->var, e->type, e->prec))
+            if (!emci_print_value(e->var, e->type, e->prec, env))
                 return EMCI_STATUS_NOT_SUPPORTED;
             EMCI_PRINTF(EMCI_ENDL);
         }
