@@ -33,6 +33,10 @@ typedef struct emci_env_tag
     void *extra;
 } emci_env_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void emci_main_loop(emci_env_t *env);
 void emci_process_command(char *command, emci_env_t *env);
 const char *emci_status_message(emci_status_t status);
@@ -44,5 +48,9 @@ uint_fast8_t emci_tokenize(char *buffer,
 emci_status_t emci_strtoul2(const char *s, uint32_t *result, uint32_t radix);
 emci_status_t emci_strtol2(const char *s, int32_t *result, uint32_t radix);
 emci_status_t emci_strtof2(const char *s, float *result);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
